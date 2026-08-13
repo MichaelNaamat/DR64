@@ -1,7 +1,18 @@
 #!/bin/bash
 
-declare -a vmon_bus=("0x00" "0x00" "0x00" "0x00")
-declare -a vmon_dev=("0x34" "0x35" "0x36" "0x37")
+declare -a VMON_BUS=("0x00" "0x00" "0x00" "0x00")
+declare -a VMON_DEV=("0x34" "0x35" "0x36" "0x37")
+
+
+# -------------------- Bank independent ------------------------
+declare -r REG_BANK_SEL="0xF0"
+
+# -------------------- Bank 0 registers ------------------------
+# --->>> Reg addresses of MON_LVL[i] for channels 0..7
+declare -a VMON_LVL_REG=("0x40" "0x41" "0x42" "0x43" "0x44" "0x45" "0x46" "0x47")   
+
+# -------------------- Bank 1 registers ------------------------
+declare -r REG_VRANGE_MUL="0x1F"   
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Print values of voltage monitor registers for a given device
@@ -9,14 +20,19 @@ declare -a vmon_dev=("0x34" "0x35" "0x36" "0x37")
 # $1 - Bus number
 # $2 - Device number
 # $3 - Monitor channel (0..7)
+# $4 - VRANGE_MULT value (1..4 for 1x..4x)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function read_vmon_channel()
+function check_vmon_channel()
 {
-    local bus dev ch
+    local bus dev ch mon_lvl vrange_mul
     bus=$1
     dev=$2
     ch=$3
+    vrange_mul=$4
+
+    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})
+    echo "Channel $ch: MON_LVL=$mon_lvl, VRANGE_MULT=$vrange_mul"  ## DEBUG
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -27,7 +43,7 @@ function read_vmon_channel()
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function check_vmon_dev()
 {
-    local bus dev
+    local bus dev vrange_mul
     bus=$1
     dev=$2
 
@@ -35,15 +51,20 @@ function check_vmon_dev()
     echo "* Testing VMON Dev $dev on i2c bus $bus"
     echo "*****************************************"
 
+    # --->>> First - read the value of VRANGE_MULT from bank 1, register 0xF1
+    i2cset -y -f $bus $dev $REG_BANK_SEL 1   # Move to bank 1
+    vrange_mul=$(i2cget -y -f $bus $dev $REG_VRANGE_MUL)
+    i2cset -y -f $bus $dev $REG_BANK_SEL 0   # Move back to bank 0
+    
     # DEBUG: Read all 8 channels of the device
     for ch in {0..7}
     do
-        read_vmon_channel $bus $dev $ch
+        check_vmon_channel $bus $dev $ch $vrange_mul
     done
 }
 
 # ---->>>> Call tests for all devices...
 for i in {0..3}
 do
-    check_vmon_dev ${vmon_bus[$i]} ${vmon_dev[$i]}
+    check_vmon_dev ${VMON_BUS[$i]} ${VMON_DEV[$i]}
 done
