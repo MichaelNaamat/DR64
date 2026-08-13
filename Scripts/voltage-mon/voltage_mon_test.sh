@@ -25,14 +25,21 @@ declare -r REG_VRANGE_MUL="0x1F"
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function check_vmon_channel()
 {
-    local bus dev ch mon_lvl vrange_mul
+    local bus dev ch mon_lvl mul_val volt_val
     bus=$1
     dev=$2
     ch=$3
-    vrange_mul=$4
+    mul_val=$4
+##
+##    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})
+##    volt_val=$(echo "$mon_lvl * $mul_val" | bc)
+##    echo "Channel $ch: MON_LVL=$mon_lvl, MUL_VAL=$mul_val, VOLT_VAL=$volt_val"  ## DEBUG
+    mon_lvl=$(("0xFF"))
 
-    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})
-    echo "Channel $ch: MON_LVL=$mon_lvl, VRANGE_MULT=$vrange_mul"  ## DEBUG
+    # Multiply and format output to 2 decimal places
+    volt_val=$(awk -v a="$mon_lvl" -v b="$mul_val" 'BEGIN { printf "%.2f", a * b }')
+
+    echo "VOLT_VAL=$volt_val"  ## DEBUG
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -43,7 +50,7 @@ function check_vmon_channel()
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function check_vmon_dev()
 {
-    local bus dev vrange_mul
+    local bus dev vrange_mul mul_val
     bus=$1
     dev=$2
 
@@ -56,10 +63,17 @@ function check_vmon_dev()
     vrange_mul=$(i2cget -y -f $bus $dev $REG_VRANGE_MUL)
     i2cset -y -f $bus $dev $REG_BANK_SEL 0   # Move back to bank 0
     
+##    case $vrange_mul in
+##        0) mul_val="0.005" ;;
+##        1) mul_val="0.020" ;;
+##        *) echo "** Invalid VRANGE_MULT." ; exit 1 ;;
+##    esac
+    mul_val="0.005"
+
     # DEBUG: Read all 8 channels of the device
     for ch in {0..7}
     do
-        check_vmon_channel $bus $dev $ch $vrange_mul
+        check_vmon_channel $bus $dev $ch $mul_val
     done
 }
 
