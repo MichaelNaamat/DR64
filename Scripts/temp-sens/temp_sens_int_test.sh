@@ -12,7 +12,7 @@ i2c_bus=("0x00" "0x04" "0x04" "0x04" "0x04")
 i2c_dev=("0x49" "0x48" "0x49" "0x4A" "0x4C")
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Test 
+# Print values of Temp, T-Low, T-High registers for a given device
 # Parameters:
 # $1 - Bus number
 # $2 - Device number
