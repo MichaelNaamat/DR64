@@ -31,15 +31,17 @@ function check_vmon_channel()
     ch=$3
     vrange_mul=$4
 
-    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})
 
-    case $vrange_mul in
-        0) volt_val=$(awk -v a="$mon_lvl"  'BEGIN { printf "%.3f", 0.2 + a * 0.005 }') ;;
-        1) volt_val=$(awk -v a="$mon_lvl"  'BEGIN { printf "%.3f", 0.8 + a * 0.02 }') ;;
-        *) echo "** Invalid VRANGE_MULT." ; exit 1 ;;
-    esac
+    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      # read monitor level for channel $ch
+    mon_lvl=$(($mon_lvl))
 
-    echo "VOLT_VAL=$volt_val"  ## DEBUG
+    # ---->>> Take bit VRANGE_MULT[ch] 
+    if (((vrange_mul & (1 << ch)) != 0)); then   # vrange_mul[ch] == '1'
+        volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.8 + a * 0.02 }')
+    else
+        volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.2 + a * 0.005 }')
+    fi
+    echo "Channel $ch: MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -62,6 +64,8 @@ function check_vmon_dev()
     i2cset -y -f $bus $dev $REG_BANK_SEL 1   # Move to bank 1
     vrange_mul=$(i2cget -y -f $bus $dev $REG_VRANGE_MUL)
     i2cset -y -f $bus $dev $REG_BANK_SEL 0   # Move back to bank 0
+    vrange_mul=0xC0  ### DEBUG
+    echo "VRANGE_MULT: ($vrange_mul)." 
     
     # DEBUG: Read all 8 channels of the device
     for ch in {0..7}
