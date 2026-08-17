@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# declare -a VMON_BUS=("0x00" "0x00" "0x00" "0x00")
-# declare -a VMON_DEV=("0x34" "0x35" "0x36" "0x37")
+# --->>> Define color variables
+declare -r C_RED='\e[1;31m'
+declare -r C_GREEN='\e[1;32m'
+declare -r C_YELLOW='\e[1;33m'
+declare -r C_BLUE='\e[1;34m'
+declare -r C_NONE='\e[0m' # No Color / Reset
 
 # -------------------- Bank independent ------------------------
 declare -r REG_BANK_SEL="0xF0"
@@ -31,7 +35,7 @@ declare -A U94_ch4=(name "0.86V (PCIE) +/-5%"        min 0.817   typ 0.86   max 
 declare -A U94_ch5=(name "0.75V (MIPI) +/-5%"        min 0.7125  typ 0.75   max 0.7875)
 declare -A U94_ch6=(name "1.05V (DDR) +/-3%"         min 1.0185  typ 1.05   max 1.0815)
 declare -A U94_ch7=(name "0.5V (DDR) +/-5%"          min 0.475   typ 0.5    max 0.525)
-declare -A U94_ch8=(name "1.8V (Main) +/-5%"         min 1.71    typ 1.8  max 1.89)
+declare -A U94_ch8=(name "1.8V (Main) +/-5%"         min 1.71    typ 1.8    max 1.89)
 declare -a U94_channels=(U94_ch1 U94_ch2 U94_ch3 U94_ch4 U94_ch5 U94_ch6 U94_ch7 U94_ch8)
 
 declare -A U95_ch1=(name "1.1V (USS_12v_M) +/-5%"   min 1.03835 typ 1.1     max 1.14765)
@@ -44,14 +48,14 @@ declare -A U95_ch7=(name "1.1V (12vPoC_M) +/-5%"    min 1.03835 typ 1.1     max 
 declare -A U95_ch8=(name "5V"                       min 4.75    typ 5       max 5.25)
 declare -a U95_channels=(U95_ch1 U95_ch2 U95_ch3 U95_ch4 U95_ch5 U95_ch6 U95_ch7 U95_ch8)
     
-declare -A U114_ch1=(name "0.8V () +/-5%"           min 0.76    typ 0.8 max 0.84)
-declare -A U114_ch2=(name "1.2V () +/-5%"           min 1.14    typ 1.2 max 1.26)
-declare -A U114_ch3=(name "0.8V () +/-5%"           min 0.76    typ 0.8 max 0.84)
-declare -A U114_ch4=(name "1.2V () +/-5%"           min 1.14    typ 1.2 max 1.26)
+declare -A U114_ch1=(name "0.8V () +/-5%"           min 0.76    typ 0.8  max 0.84)
+declare -A U114_ch2=(name "1.2V () +/-5%"           min 1.14    typ 1.2  max 1.26)
+declare -A U114_ch3=(name "0.8V () +/-5%"           min 0.76    typ 0.8  max 0.84)
+declare -A U114_ch4=(name "1.2V () +/-5%"           min 1.14    typ 1.2  max 1.26)
 declare -A U114_ch5=(name "0.84V () +/-5%"          min 0.798   typ 0.84 max 0.882)
-declare -A U114_ch6=(name "1.2V () +/-5%"           min 1.14    typ 1.2 max 1.26)
-declare -A U114_ch7=(name "1.8V (ETH_1v8) +/-5%"    min 1.71    typ 1.8 max 1.89)
-declare -A U114_ch8=(name "5V (Main 5V) +/-5%"      min 4.75    typ 5   max 5.25)
+declare -A U114_ch6=(name "1.2V () +/-5%"           min 1.14    typ 1.2  max 1.26)
+declare -A U114_ch7=(name "1.8V (ETH_1v8) +/-5%"    min 1.71    typ 1.8  max 1.89)
+declare -A U114_ch8=(name "5V (Main 5V) +/-5%"      min 4.75    typ 5    max 5.25)
 declare -a U114_channels=(U114_ch1 U114_ch2 U114_ch3 U114_ch4 U114_ch5 U114_ch6 U114_ch7 U114_ch8)
     
 declare -A U148_ch1=(name "0.8V (TDA4_0v8_VDD_CORE) +/-5%"   min 0.76    typ 0.8     max 0.84)
@@ -61,7 +65,7 @@ declare -A U148_ch4=(name "0.85V (TDA4_0v85) +/-5%"          min 0.8075  typ 0.8
 declare -A U148_ch5=(name "1.8V (TDA4_1v8_PHY_LDO) +/-5%"    min 1.71    typ 1.8     max 1.89)
 declare -A U148_ch6=(name "0.8V (TDA4_0v8_DLL_LDO) +/-5%"    min 0.76    typ 0.8     max 0.84)
 declare -A U148_ch7=(name "1.8V (TDA4_1v8_PLL_LDO) +/-5%"    min 1.71    typ 1.8     max 1.89)
-declare -A U148_ch8=(name "0V disabled"                      min 0       typ 0       max 0)
+## declare -A U148_ch8=(name "0V disabled"                      min 0       typ 0       max 0)
 declare -a U148_channels=(U148_ch1 U148_ch2 U148_ch3 U148_ch4 U148_ch5 U148_ch6 U148_ch7 U148_ch8)
 
 # ----->>> Define VMON chips and their channels
@@ -85,25 +89,40 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U1
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function check_vmon_channel()
 {
-    local bus dev ch mon_lvl mul_val volt_val
+    local bus dev ch
+    local ch_info
+    local mon_lvl volt_val
+    local min_val typ_val max_val
+
     bus=$1
     dev=$2
     ch=$3
     declare -n ch_info="$4"
+    min_val=${ch_info[min]}
+    typ_val=${ch_info[typ]}
+    max_val=${ch_info[max]}
 
     # ---->>>> read monitor level for channel $ch
 # TODO    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
 # TODO    mon_lvl=$(($mon_lvl))
-    mon_lvl=$((0xFF))  # For testing, assume max level
+    mon_lvl=$((0x72))  # For testing, assume max level
 
-    # ---->>> Take bit VRANGE_MULT[ch] 
-    ## if (( ${ch_info[max]} > 1.475 )); then
+    # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
     if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
         volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.8 + a * 0.02 }')
     else
         volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.2 + a * 0.005 }')
     fi
-    echo "  Channel ${ch_info[name]}: min=${ch_info[min]}, typ=${ch_info[typ]}, max=${ch_info[max]} MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
+    echo "  Channel ${ch_info[name]}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
+
+    # ---->>> Check if voltage value is within min/max range
+    if (( $(awk -v x="$volt_val" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
+        echo -e "${C_RED}  >>> ERROR: Less than min ($volt_val < $min_val)${C_NONE}"
+    elif (( $(awk -v x="$volt_val" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
+        echo -e "${C_RED}  >>> ERROR: More than max ($volt_val > $max_val)${C_NONE}"
+    else
+        echo -e "${C_GREEN}  >>> OK: $volt_val is within range [$min_val, $max_val]${C_NONE}"
+    fi
 
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -133,12 +152,12 @@ function check_vmon_dev()
             continue
         fi
 
- ##       echo "  Channel ${vmon_ch[name]}: min=${vmon_ch[min]}, typ=${vmon_ch[typ]}, max=${vmon_ch[max]}"
         check_vmon_channel $bus $dev $ch_ind "$ch"
         ch_ind=$((ch_ind + 1))
     done
 }
 
+########################################################################################
 # ---->>>> Call tests for all devices...
 for chip in "${vmon_chip[@]}"; do
     declare -n vmon_dev="$chip"

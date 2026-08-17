@@ -1,11 +1,18 @@
 #!/bin/bash
 
+# --->>> Define color variables
+declare -r C_RED='\e[1;31m'
+declare -r C_GREEN='\e[1;32m'
+declare -r C_YELLOW='\e[1;33m'
+declare -r C_BLUE='\e[1;34m'
+declare -r C_NONE='\e[0m' # No Color / Reset
+
 # --->>> Register definition
-REG_TEMP="0x00"
-REG_CR="0x01"
-REG_TLOW="0x02"
-REG_THIGH="0x03"
-REG_OS="0x04"
+declare -r REG_TEMP="0x00"
+declare -r REG_CR="0x01"
+declare -r REG_TLOW="0x02"
+declare -r REG_THIGH="0x03"
+declare -r REG_OS="0x04"
 
 # --->>> List of temperature chips (i2c bus & device)
 i2c_bus=("0x00" "0x04" "0x04" "0x04" "0x04")
@@ -157,7 +164,7 @@ function check_temp75c_int()
     # "gpio-357 (PC_04               |AViVA               ) in  lo IRQ"
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
     echo "Int state: ${gpio_line:58:2}"
-    test "${gpio_line:58:2}" = "lo" && echo ">>> Test Pass" || echo "*** Test FAIL ***"
+    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN}>>> Test Pass${C_NONE}" || echo -e "${C_RED}*** Test FAIL ***${C_NONE}"
 
     # --->>> Restore original values of T-Low/T-High before moving to next device
     # DEBUG: Set T-High: 60c, T-Low: 58c
