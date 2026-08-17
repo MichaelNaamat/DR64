@@ -89,19 +89,22 @@ function check_vmon_channel()
     bus=$1
     dev=$2
     ch=$3
-    ch_info=$4
+    declare -n ch_info="$4"
 
     # ---->>>> read monitor level for channel $ch
-    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
-    mon_lvl=$(($mon_lvl))
+# TODO    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
+# TODO    mon_lvl=$(($mon_lvl))
+    mon_lvl=$((0xFF))  # For testing, assume max level
 
     # ---->>> Take bit VRANGE_MULT[ch] 
-    if (( $(echo "${ch_info[max]} > 1.475" | bc -l) )); then
+    ## if (( ${ch_info[max]} > 1.475 )); then
+    if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
         volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.8 + a * 0.02 }')
     else
         volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.2 + a * 0.005 }')
     fi
-    echo "Channel $ch: MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
+    echo "  Channel ${ch_info[name]}: min=${ch_info[min]}, typ=${ch_info[typ]}, max=${ch_info[max]} MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
+
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -113,10 +116,10 @@ function check_vmon_channel()
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function check_vmon_dev()
 {
-    local bus dev chlist
+    local bus dev chlist ch_ind ch
     bus=$1
     dev=$2
-    chlist=$3
+    declare -n chlist=$3
 
     echo "*****************************************"
     echo "* Testing VMON Dev $dev on i2c bus $bus"
@@ -124,13 +127,14 @@ function check_vmon_dev()
   
     # --->>> Loop over channels and test each one
     ch_ind=0
-    for ch in $chlist; do
+    for ch in "${chlist[@]}"; do
         declare -n vmon_ch="$ch"
         if [[ -z ${vmon_ch[name]} ]]; then   # Skip non-active channels (e.g. U148_ch8)
             continue
         fi
 
-        check_vmon_channel $bus $dev $ch_ind $vmon_ch
+ ##       echo "  Channel ${vmon_ch[name]}: min=${vmon_ch[min]}, typ=${vmon_ch[typ]}, max=${vmon_ch[max]}"
+        check_vmon_channel $bus $dev $ch_ind "$ch"
         ch_ind=$((ch_ind + 1))
     done
 }
