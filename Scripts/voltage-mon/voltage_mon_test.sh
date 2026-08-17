@@ -1,10 +1,24 @@
 #!/bin/bash
 
 # --->>> Define color variables
-declare -r C_RED='\e[1;31m'
-declare -r C_GREEN='\e[1;32m'
-declare -r C_YELLOW='\e[1;33m'
-declare -r C_BLUE='\e[1;34m'
+# Normal colors
+declare -r C_RED='\e[0;31m'
+declare -r C_GREEN='\e[0;32m'
+declare -r C_YELLOW='\e[0;33m'
+declare -r C_BLUE='\e[0;34m'
+
+# Bold colors
+declare -r C_RED_B='\e[1;31m'
+declare -r C_GREEN_B='\e[1;32m'
+declare -r C_YELLOW_B='\e[1;33m'
+declare -r C_BLUE_B='\e[1;34m'
+
+# Underline colors
+declare -r C_RED_U='\e[4;31m'
+declare -r C_GREEN_U='\e[4;32m'
+declare -r C_YELLOW_U='\e[4;33m'
+declare -r C_BLUE_U='\e[4;34m'
+
 declare -r C_NONE='\e[0m' # No Color / Reset
 
 # -------------------- Bank independent ------------------------
@@ -103,9 +117,14 @@ function check_vmon_channel()
     max_val=${ch_info[max]}
 
     # ---->>>> read monitor level for channel $ch
-# TODO    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
-# TODO    mon_lvl=$(($mon_lvl))
-    mon_lvl=$((0x72))  # For testing, assume max level
+    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
+    mon_lvl=$(($mon_lvl))
+#    mon_lvl=$((0x00))  # For testing, assume max level
+
+    if (( $mon_lvl <= 0 || $mon_lvl > 255 )); then
+        echo -e "${C_RED_B}  >>> ERROR: Invalid monitor level ($mon_lvl) for channel ${ch}${C_NONE}"
+        return
+    fi
 
     # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
     if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
@@ -136,12 +155,14 @@ function check_vmon_channel()
 function check_vmon_dev()
 {
     local bus dev chlist ch_ind ch
-    bus=$1
-    dev=$2
-    declare -n chlist=$3
+    declare -n chip_info="$1"
+
+    bus=${chip_info[bus]}
+    dev=${chip_info[dev]}
+    declare -n chlist=${chip_info[channels]}
 
     echo "*****************************************"
-    echo "* Testing VMON Dev $dev on i2c bus $bus"
+    echo "* Testing $1: Addr $dev on i2c bus $bus"
     echo "*****************************************"
   
     # --->>> Loop over channels and test each one
@@ -160,7 +181,8 @@ function check_vmon_dev()
 ########################################################################################
 # ---->>>> Call tests for all devices...
 for chip in "${vmon_chip[@]}"; do
-    declare -n vmon_dev="$chip"
+#    declare -n vmon_dev="$chip"
     
-    check_vmon_dev "${vmon_dev[bus]}" "${vmon_dev[dev]}" "${vmon_dev[channels]}"
+#    check_vmon_dev "${vmon_dev[bus]}" "${vmon_dev[dev]}" "${vmon_dev[channels]}"
+    check_vmon_dev "$chip"
 done    
