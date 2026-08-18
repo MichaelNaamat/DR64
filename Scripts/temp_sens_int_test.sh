@@ -14,9 +14,14 @@ declare -r REG_TLOW="0x02"
 declare -r REG_THIGH="0x03"
 declare -r REG_OS="0x04"
 
-# --->>> List of temperature chips (i2c bus & device)
-i2c_bus=("0x00" "0x04" "0x04" "0x04" "0x04")
-i2c_dev=("0x49" "0x48" "0x49" "0x4A" "0x4C")
+# ----->>> Define Temp-sensor chips
+declare -A temp_chip_U60=(  name "U60"   bus "0x04" dev "0x48" )
+declare -A temp_chip_U61=(  name "U61"  bus "0x04" dev "0x4C" )
+declare -A temp_chip_U62=(  name "U62"  bus "0x04" dev "0x49" )
+declare -A temp_chip_U64=(  name "U64"  bus "0x04" dev "0x4A" )
+declare -A temp_chip_U127=( name "U127"  bus "0x00" dev "0x49" )
+
+temp_chip=(temp_chip_U60 temp_chip_U61 temp_chip_U62 temp_chip_U64 temp_chip_U127)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Print values of Temp, T-Low, T-High registers for a given device
@@ -40,23 +45,25 @@ function read_temp_reg()
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test interrupt line for temp75b-q1 tempratur sensor 
 # Parameters:
-# $1 - Bus number
-# $2 - Device number
+# $1 - Temperature sensor chip associative array (name, bus, dev)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function check_temp75b_int()
+function temp75b_check_int()
 {
     local bus dev cur_temp org_t_low org_t_high 
-    bus=$1
-    dev=$2
+    local chip_info
+    declare -n chip_info="$1"
+
+    bus=${chip_info[bus]}
+    dev=${chip_info[dev]}
 	
     # ---->>> Save original High/Low limit to restore at end of Test
     org_t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
     org_t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
 	
-    echo "*****************************************"
-    echo "* Testing Temp Dev $dev on i2c bus $bus"
-    echo "*****************************************"
+    echo "****************************************************"
+    echo "* Testing $1: Address $dev on i2c bus $bus"
+    echo "****************************************************"
 	
     # --->>> Set Configuration Reg (0x01).:
     # OS (15)    = '0'
@@ -98,7 +105,9 @@ function check_temp75b_int()
 #    t_high="0x003C"
 #    t_low="0x00D8"
 
-    echo "Restoring Org T-Low: $t_low T-High: $t_high"
+    echo "Restoring Org T-Low: $org_t_low T-High: $org_t_high"
+    i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
+    i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
     i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
     i2cset -y -f $bus $dev $REG_THIGH $org_t_high w 
     read_temp_reg $bus $dev     # DEBUG & clear int line
@@ -114,7 +123,7 @@ function check_temp75b_int()
 # $2 - Device number
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function check_temp75c_int()
+function temp75c_check_int()
 {
     local bus dev t_low t_high
     bus=$1
@@ -181,9 +190,9 @@ function check_temp75c_int()
     echo "Normal Int state: ${gpio_line:58:2}"
 }
 
+############################################################################
 # ---->>>> Call tests for all devices...
-for i in {0..4}
-do
-    check_temp75b_int ${i2c_bus[$i]} ${i2c_dev[$i]}
+for chip in "${temp_chip[@]}"; do
+    temp75b_check_int "$chip"
 done
 
