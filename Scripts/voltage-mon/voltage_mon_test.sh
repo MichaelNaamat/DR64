@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# --->>> Define color variables
+# --->>> Define color variables. TODO: Move to common script for all tests
 # Normal colors
 declare -r C_RED='\e[0;31m'
 declare -r C_GREEN='\e[0;32m'
@@ -93,7 +93,7 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U1
 
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Print values of voltage monitor registers for a given device
+# Test values of voltage monitor registers for a given device
 # Parameters:
 # $1 - Bus number
 # $2 - Device number
@@ -101,7 +101,7 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U1
 # $4 - Channel information (name, min, typ, max)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function check_vmon_channel()
+function vmon_check_channel()
 {
     local bus dev ch
     local ch_info
@@ -147,12 +147,10 @@ function check_vmon_channel()
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
 # Parameters:
-# $1 - Bus number
-# $2 - Device number
-# $3 - List of channels to test
+# $1 - VMON chip information (name, bus, dev)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function check_vmon_dev()
+function vmon_check_dev()
 {
     local bus dev chlist ch_ind ch
     declare -n chip_info="$1"
@@ -161,9 +159,9 @@ function check_vmon_dev()
     dev=${chip_info[dev]}
     declare -n chlist=${chip_info[channels]}
 
-    echo "*****************************************"
+    echo -e "\n****************************************************"
     echo "* Testing $1: Addr $dev on i2c bus $bus"
-    echo "*****************************************"
+    echo "****************************************************"
   
     # --->>> Loop over channels and test each one
     ch_ind=0
@@ -173,7 +171,7 @@ function check_vmon_dev()
             continue
         fi
 
-        check_vmon_channel $bus $dev $ch_ind "$ch"
+        vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch"
         ch_ind=$((ch_ind + 1))
     done
 }
@@ -181,8 +179,5 @@ function check_vmon_dev()
 ########################################################################################
 # ---->>>> Call tests for all devices...
 for chip in "${vmon_chip[@]}"; do
-#    declare -n vmon_dev="$chip"
-    
-#    check_vmon_dev "${vmon_dev[bus]}" "${vmon_dev[dev]}" "${vmon_dev[channels]}"
-    check_vmon_dev "$chip"
+    vmon_check_dev "$chip"
 done    
