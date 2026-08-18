@@ -1,11 +1,6 @@
 #!/bin/bash
 
-# --->>> Define color variables
-declare -r C_RED='\e[1;31m'
-declare -r C_GREEN='\e[1;32m'
-declare -r C_YELLOW='\e[1;33m'
-declare -r C_BLUE='\e[1;34m'
-declare -r C_NONE='\e[0m' # No Color / Reset
+source ./script_defs.sh     # Include general definitions for all tests (colors, etc.)
 
 # --->>> Register definition
 declare -r REG_TEMP="0x00"
@@ -61,9 +56,11 @@ function temp75b_check_int()
     org_t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
     org_t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
 	
+    echo -e "${C_YELLOW_B}"
     echo "****************************************************"
-    echo "* Testing $1: Address $dev on i2c bus $bus"
+    echo "* Testing Temp Sens ${chip_info[name]}: Addr $dev on i2c bus $bus"
     echo "****************************************************"
+    echo -e -n "${C_NONE}"
 	
     # --->>> Set Configuration Reg (0x01).:
     # OS (15)    = '0'

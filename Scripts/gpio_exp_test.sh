@@ -1,5 +1,8 @@
 #!/bin/bash
 
+source ./script_defs.sh     # Include general definitions for all tests (colors, etc.)
+
+
 # --->>> Register addresses for GPIO-expansion chips
 declare -r GPIO_REG_DIN0="0x00"   
 declare -r GPIO_REG_DIN1="0x01"
@@ -31,10 +34,11 @@ function gpio_check_dev()
     bus=${chip_info[bus]}
     dev=${chip_info[dev]}
 
-    echo 
-    echo "****************************************************"
-    echo "* Testing $1: Addr $dev on i2c bus $bus"
-    echo "****************************************************"
+    echo -e "${C_YELLOW_B}"
+    echo "*******************************************************"
+    echo "* Testing GPIO ${chip_info[name]}: Addr $dev on i2c bus $bus"
+    echo "*******************************************************"
+    echo -e -n "${C_NONE}"
     din0=$(i2cget -y -f $bus $dev $GPIO_REG_DIN0)
     din1=$(i2cget -y -f $bus $dev $GPIO_REG_DIN1)
     dout0=$(i2cget -y -f $bus $dev $GPIO_REG_DOUT0)
