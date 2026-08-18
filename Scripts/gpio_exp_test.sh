@@ -2,7 +2,6 @@
 
 source ./script_defs.sh     # Include general definitions for all tests (colors, etc.)
 
-
 # --->>> Register addresses for GPIO-expansion chips
 declare -r GPIO_REG_DIN0="0x00"   
 declare -r GPIO_REG_DIN1="0x01"

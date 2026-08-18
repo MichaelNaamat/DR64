@@ -7,10 +7,16 @@ declare -r REG_BANK_SEL="0xF0"
 
 # -------------------- Bank 0 registers ------------------------
 # --->>> Reg addresses of MON_LVL[i] for channels 0..7
-declare -a VMON_LVL_REG=("0x40" "0x41" "0x42" "0x43" "0x44" "0x45" "0x46" "0x47")   
+declare -a REG_VMON_LVL=("0x40" "0x41" "0x42" "0x43" "0x44" "0x45" "0x46" "0x47")   
 
 # -------------------- Bank 1 registers ------------------------
 declare -r REG_VRANGE_MUL="0x1F"   
+
+# --->>> Under/Over voltage threshold registers for channels 0..7
+declare -a REG_UV_HF=("0x20" "0x30" "0x40" "0x50" "0x60" "0x70" "0x80" "0x90")   # UV_HF[i] for channels 0..7
+declare -a REG_OV_HF=("0x21" "0x31" "0x41" "0x51" "0x61" "0x71" "0x81" "0x91")   # OV_HF[i] for channels 0..7
+declare -a REG_UV_LF=("0x22" "0x32" "0x42" "0x52" "0x62" "0x72" "0x82" "0x92")   # UV_LF[i] for channels 0..7
+declare -a REG_OV_LF=("0x23" "0x33" "0x43" "0x53" "0x63" "0x73" "0x83" "0x93")   # OV_LF[i] for channels 0..7
 
 
 declare -A U93_ch1=(name "0.875V (core) +2.5% / -3%" min 0.84875 typ 0.875  max 0.896875)
@@ -82,12 +88,11 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U1
 # $4 - Channel information (name, min, typ, max)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function vmon_check_channel()
+function vmon_check_channel_value()
 {
     local bus dev ch
     local ch_info
     local mon_lvl volt_val
-    local min_val typ_val max_val
 
     bus=$1
     dev=$2
@@ -98,9 +103,10 @@ function vmon_check_channel()
     max_val=${ch_info[max]}
 
     # ---->>>> read monitor level for channel $ch
-    mon_lvl=$(i2cget -y -f $bus $dev ${VMON_LVL_REG[$ch]})      
+    mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
     mon_lvl=$(($mon_lvl))
 #    mon_lvl=$((0x00))  # For testing, assume max level
+
 
     if (( $mon_lvl <= 0 || $mon_lvl > 255 )); then
         echo -e "${C_RED_B}  >>> ERROR: Invalid monitor level ($mon_lvl) for channel ${ch}${C_NONE}"
@@ -123,7 +129,37 @@ function vmon_check_channel()
     else
         echo -e "${C_GREEN}  >>> OK: $volt_val is within range [$min_val, $max_val]${C_NONE}"
     fi
+}
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Test interrupt line of voltage monitor channel
+# Parameters:
+# $1 - Bus number
+# $2 - Device number
+# $3 - Monitor channel (0..7)
+# Return: None
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function vmon_check_channel_int()
+{
+    local uv_hf ov_hf uv_lf ov_lf
+    local bus dev ch
+    local mon_lvl
 
+    bus=$1
+    dev=$2
+    ch=$3
+
+    # ---->>>> read monitor level for channel $ch to set threshold registers according to this value (to generate interrupt)
+    mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
+    mon_lvl=$(($mon_lvl))
+
+    #--->>> Read threashold registers for channel $ch (UV_HF, OV_HF, UV_LF, OV_LF)
+    uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
+    ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
+    uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
+    ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
+
+    # --->>> Show threshold register values for channel $ch
+    echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -153,7 +189,7 @@ function vmon_check_dev()
             continue
         fi
 
-        vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch"
+        vmon_check_channel_value "$bus" "$dev" "$ch_ind" "$ch"
         ch_ind=$((ch_ind + 1))
     done
 }

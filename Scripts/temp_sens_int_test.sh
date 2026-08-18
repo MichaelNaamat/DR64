@@ -85,7 +85,7 @@ function temp75b_check_int()
     # --->>> Print int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
     echo -n "T-High Int state(${gpio_line:58:2}): "
-    test "${gpio_line:58:2}" = "lo" && echo "Pass" || echo "*** FAIL"
+    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
     read_temp_reg $bus $dev     # DEBUG & clear int line
 
     # ============ T-Low test: Set T-Low to +60c & T-High to +65c)
@@ -95,7 +95,7 @@ function temp75b_check_int()
     # --->>> Print int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
     echo -n "T-Low Int state(${gpio_line:58:2}): "
-    test "${gpio_line:58:2}" = "lo" && echo "Pass" || echo "*** FAIL"
+    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
 
     # --->>> Restore original values of T-Low/T-High before moving to next device
     # DEBUG: Set T-High: +60c, T-Low: -40c
