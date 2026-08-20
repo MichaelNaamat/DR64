@@ -74,9 +74,9 @@ declare -A vmon_chip_U93=( name "U93"  bus "0x00" dev "0x37" channels U93_channe
 declare -A vmon_chip_U94=( name "U94"  bus "0x00" dev "0x36" channels U94_channels)
 declare -A vmon_chip_U95=( name "U95"  bus "0x00" dev "0x35" channels U95_channels)
 declare -A vmon_chip_U114=(name "U114" bus "0x00" dev "0x34" channels U114_channels)
-declare -A vmon_chip_U148=(name "U148" bus "0x00" dev "0x33" channels U148_channels)  # ** Conflict on bus number
+declare -A vmon_chip_U148=(name "U148" bus "0x04" dev "0x33" channels U148_channels)  # ** Conflict on bus number
 
-vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U148)
+vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114) ## vmon_chip_U148)
 
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -108,7 +108,9 @@ function vmon_check_channel()
     max_val=${ch_info[max]}
 
     # ---->>>> Read channel data from H/W
+    i2cset -y -f $bus $dev REG_BANK_SEL 0x00   # Select Bank 0    
     mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
+    i2cset -y -f $bus $dev REG_BANK_SEL 0x01   # Select Bank 1
     uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
     ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
     uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
