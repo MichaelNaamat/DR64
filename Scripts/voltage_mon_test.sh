@@ -144,7 +144,8 @@ function vmon_check_channel()
     uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
     ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
 
-    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)"
+    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val"
+    echo "                 MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)"
 
     # ---->>> Check if voltage value is within min/max range
     if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
