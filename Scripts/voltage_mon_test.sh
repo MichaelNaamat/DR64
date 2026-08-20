@@ -144,7 +144,7 @@ function vmon_check_channel()
     uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
     ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
 
-    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl, MON_LVL_V=$mon_lvl_v UV_HF_V=$uv_hf_v OV_HF_V=$ov_hf_v UV_LF_V=$uv_lf_v OV_LF_V=$ov_lf_v"
+    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)"
 
     # ---->>> Check if voltage value is within min/max range
     if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
@@ -155,44 +155,6 @@ function vmon_check_channel()
         echo -e "${C_GREEN}  >>> OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
     fi
 }
-## # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-## # Test interrupt line of voltage monitor channel
-## # Parameters:
-## # $1 - Bus number
-## # $2 - Device number
-## # $3 - Monitor channel (0..7)
-## # Return: None
-## # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-## function vmon_check_channel_int()
-## {
-##     local uv_hf ov_hf uv_lf ov_lf
-##     local bus dev ch
-##     local mon_lvl
-##     local gpio_line
-## 
-##     bus=$1
-##     dev=$2
-##     ch=$3
-##     declare -n ch_info="$4"
-## 
-##     # ---->>>> read monitor level for channel $ch to set threshold registers according to this value (to generate interrupt)
-##     mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
-##     mon_lvl=$(($mon_lvl))
-## 
-##     #--->>> Read threashold registers for channel $ch (UV_HF, OV_HF, UV_LF, OV_LF)
-##     uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
-##     ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
-##     uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
-##     ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
-## 
-##     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PK_07")
-##     gpio_line=${gpio_line:58:2}   # Take 'lo'/'hi' sub-string from gpio_line to check interrupt line state
-## 
-##     # --->>> Show threshold register values for channel $ch
-##     echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf INT=$gpio_line"
-## 
-##     # TODO: Implement interrupt line test for voltage monitor channel - Input 'PK_07' (GPIO) in CPU
-## }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
 # Parameters:
