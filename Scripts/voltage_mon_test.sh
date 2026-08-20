@@ -88,26 +88,41 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114 vmon_chip_U1
 # $4 - Channel information (name, min, typ, max)
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function vmon_check_channel_value()
+function vmon_check_channel()
 {
     local bus dev ch
     local ch_info
-    local mon_lvl volt_val
+    local mon_lvl uv_hf ov_hf uv_lf ov_lf  # row data read from H/W registers
+    local mon_lvl_v uv_hf_v ov_hf_v uv_lf_v ov_lf_v  # registers data convertad to voltage values
+    local min_val typ_val max_val          # Min/typ/max values for channel $ch
+    local coef mul        # To convert ADC value to voltage
 
     bus=$1
     dev=$2
     ch=$3
     declare -n ch_info="$4"
+
+    # --->>> Read min/typ/max values for channel $ch
     min_val=${ch_info[min]}
     typ_val=${ch_info[typ]}
     max_val=${ch_info[max]}
 
-    # ---->>>> read monitor level for channel $ch
+    # ---->>>> Read channel data from H/W
     mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
+    uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
+    ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
+    uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
+    ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
+
     mon_lvl=$(($mon_lvl))
-#    mon_lvl=$((0x00))  # For testing, assume max level
+    uv_hf=$(($uv_hf))
+    ov_hf=$(($ov_hf))
+    uv_lf=$(($uv_lf))
+    ov_lf=$(($ov_lf))
 
+ #   mon_lvl=$((0x10))  # For testing, assume max level
 
+    # --->>> Check if monitor level is within valid range (0..255)
     if (( $mon_lvl <= 0 || $mon_lvl > 255 )); then
         echo -e "${C_RED_B}  >>> ERROR: Invalid monitor level ($mon_lvl) for channel ${ch}${C_NONE}"
         return
@@ -115,58 +130,69 @@ function vmon_check_channel_value()
 
     # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
     if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
-        volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.8 + a * 0.02 }')
+        coef=0.8
+        mul=0.02
     else
-        volt_val=$(awk -v a="$mon_lvl" 'BEGIN { printf "%.3f", 0.2 + a * 0.005 }')
+        coef=0.2
+        mul=0.005
     fi
-    echo "  Channel ${ch_info[name]}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl, VOLT_VAL=$volt_val"
+
+    # --->>> Calculate voltage value for channel $ch according to H/W value
+    mon_lvl_v=$(awk -v a="$mon_lvl" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+    uv_hf_v=$(awk -v a="$uv_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+    ov_hf_v=$(awk -v a="$ov_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+    uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+    ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+
+    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val MON_LVL=$mon_lvl, MON_LVL_V=$mon_lvl_v UV_HF_V=$uv_hf_v OV_HF_V=$ov_hf_v UV_LF_V=$uv_lf_v OV_LF_V=$ov_lf_v"
 
     # ---->>> Check if voltage value is within min/max range
-    if (( $(awk -v x="$volt_val" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
-        echo -e "${C_RED}  >>> ERROR: Less than min ($volt_val < $min_val)${C_NONE}"
-    elif (( $(awk -v x="$volt_val" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
-        echo -e "${C_RED}  >>> ERROR: More than max ($volt_val > $max_val)${C_NONE}"
+    if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
+        echo -e "${C_RED}  >>> ERROR: Less than min ($mon_lvl_v < $min_val)${C_NONE}"
+    elif (( $(awk -v x="$mon_lvl_v" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
+        echo -e "${C_RED}  >>> ERROR: More than max ($mon_lvl_v > $max_val)${C_NONE}"
     else
-        echo -e "${C_GREEN}  >>> OK: $volt_val is within range [$min_val, $max_val]${C_NONE}"
+        echo -e "${C_GREEN}  >>> OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
     fi
 }
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Test interrupt line of voltage monitor channel
-# Parameters:
-# $1 - Bus number
-# $2 - Device number
-# $3 - Monitor channel (0..7)
-# Return: None
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function vmon_check_channel_int()
-{
-    local uv_hf ov_hf uv_lf ov_lf
-    local bus dev ch
-    local mon_lvl
-    local gpio_line
-
-    bus=$1
-    dev=$2
-    ch=$3
-
-    # ---->>>> read monitor level for channel $ch to set threshold registers according to this value (to generate interrupt)
-    mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
-    mon_lvl=$(($mon_lvl))
-
-    #--->>> Read threashold registers for channel $ch (UV_HF, OV_HF, UV_LF, OV_LF)
-    uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
-    ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
-    uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
-    ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
-
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PK_07")
-    gpio_line=${gpio_line:58:2}   # Take 'lo'/'hi' sub-string from gpio_line to check interrupt line state
-
-    # --->>> Show threshold register values for channel $ch
-    echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf INT=$gpio_line"
-
-    # TODO: Implement interrupt line test for voltage monitor channel - Input 'PK_07' (GPIO) in CPU
-}
+## # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+## # Test interrupt line of voltage monitor channel
+## # Parameters:
+## # $1 - Bus number
+## # $2 - Device number
+## # $3 - Monitor channel (0..7)
+## # Return: None
+## # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+## function vmon_check_channel_int()
+## {
+##     local uv_hf ov_hf uv_lf ov_lf
+##     local bus dev ch
+##     local mon_lvl
+##     local gpio_line
+## 
+##     bus=$1
+##     dev=$2
+##     ch=$3
+##     declare -n ch_info="$4"
+## 
+##     # ---->>>> read monitor level for channel $ch to set threshold registers according to this value (to generate interrupt)
+##     mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
+##     mon_lvl=$(($mon_lvl))
+## 
+##     #--->>> Read threashold registers for channel $ch (UV_HF, OV_HF, UV_LF, OV_LF)
+##     uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
+##     ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
+##     uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
+##     ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
+## 
+##     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PK_07")
+##     gpio_line=${gpio_line:58:2}   # Take 'lo'/'hi' sub-string from gpio_line to check interrupt line state
+## 
+##     # --->>> Show threshold register values for channel $ch
+##     echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf INT=$gpio_line"
+## 
+##     # TODO: Implement interrupt line test for voltage monitor channel - Input 'PK_07' (GPIO) in CPU
+## }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
 # Parameters:
@@ -195,7 +221,7 @@ function vmon_check_dev()
             continue
         fi
 
-        vmon_check_channel_value "$bus" "$dev" "$ch_ind" "$ch"
+        vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch"
         ch_ind=$((ch_ind + 1))
     done
 }
