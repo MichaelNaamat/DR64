@@ -143,6 +143,7 @@ function vmon_check_channel_int()
     local uv_hf ov_hf uv_lf ov_lf
     local bus dev ch
     local mon_lvl
+    local gpio_line
 
     bus=$1
     dev=$2
@@ -158,8 +159,13 @@ function vmon_check_channel_int()
     uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
     ov_lf=$(i2cget -y -f $bus $dev ${REG_OV_LF[$ch]})
 
+    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PK_07")
+    gpio_line=${gpio_line:58:2}   # Take 'lo'/'hi' sub-string from gpio_line to check interrupt line state
+
     # --->>> Show threshold register values for channel $ch
-    echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf"
+    echo "  Channel ${ch}: MON_LVL=$mon_lvl, UV_HF=$uv_hf, OV_HF=$ov_hf, UV_LF=$uv_lf, OV_LF=$ov_lf INT=$gpio_line"
+
+    # TODO: Implement interrupt line test for voltage monitor channel - Input 'PK_07' (GPIO) in CPU
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
