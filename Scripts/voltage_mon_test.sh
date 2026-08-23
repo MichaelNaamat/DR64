@@ -78,6 +78,8 @@ declare -A vmon_chip_U148=(name "U148" bus "0x04" dev "0x33" channels U148_chann
 
 vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114) # vmon_chip_U148)
 
+# ---->>> Program command line parameters for all VMON devices
+declare -r CL_PAR1=$1
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test values of voltage monitor registers for a given device
@@ -95,7 +97,9 @@ function vmon_check_channel()
     local mon_lvl uv_hf ov_hf uv_lf ov_lf  # row data read from H/W registers
     local mon_lvl_v uv_hf_v ov_hf_v uv_lf_v ov_lf_v  # registers data convertad to voltage values
     local min_val typ_val max_val          # Min/typ/max values for channel $ch
-    local coef mul        # To convert ADC value to voltage
+    local coef mul                         # To convert ADC value to voltage
+
+    local int_stat1, int_stat2, int_stat3   # State of interrupt: Before, during, after test
 
     bus=$1
     dev=$2
@@ -133,15 +137,6 @@ function vmon_check_channel()
         return
     fi
 
-##    # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
-##    if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
-##        coef=0.8
-##        mul=0.02
-##    else
-##        coef=0.2
-##        mul=0.005
-##    fi
-
     # --->>> Calculate voltage value for channel $ch according to H/W value
     mon_lvl_v=$(awk -v a="$mon_lvl" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
     uv_hf_v=$(awk -v a="$uv_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
@@ -149,17 +144,52 @@ function vmon_check_channel()
     uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
     ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
 
-    echo "  Channel ${ch}: min=$min_val, typ=$typ_val, max=$max_val"
-    echo "                 MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)"
+    if ($CL_PAR1 == "debug"); then
+        echo -e "${C_BLUE_B}  >>> DEBUG: Ch ${ch}: min=$min_val, typ=$typ_val, max=$max_val, MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)${C_NONE}"
+    fi
 
     # ---->>> Check if voltage value is within min/max range
     if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
-        echo -e "${C_RED}  >>> ERROR: Less than min ($mon_lvl_v < $min_val)${C_NONE}"
+        echo -e "${C_RED}  >>> Ch ${ch}: ERROR: Less than min ($mon_lvl_v < $min_val)${C_NONE}"
     elif (( $(awk -v x="$mon_lvl_v" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
-        echo -e "${C_RED}  >>> ERROR: More than max ($mon_lvl_v > $max_val)${C_NONE}"
+        echo -e "${C_RED}  >>> Ch ${ch}: ERROR: More than max ($mon_lvl_v > $max_val)${C_NONE}"
     else
-        echo -e "${C_GREEN}  >>> OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
+        echo -e "${C_GREEN}  >>> Ch ${ch}: OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
     fi
+
+    # ---------------------->>> Check UV interrupt <<<---------------------
+    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state before test
+    int_stat1="${int_stat1:58:2}"
+
+    i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $ov_hf             # Set UV_HF to value of OV to trigger UV interrupt
+    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state during test
+    int_stat2="${int_stat2:58:2}"
+
+    i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $uv_hf             # Restore original UV_HF value
+    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO)
+    int_stat3="${int_stat3:58:2}"
+
+    echo -n "  >>> Ch ${ch}: UV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
+    test "$int_stat1" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat2" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
+    test "$int_stat3" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
+
+    # ---------------------->>> Check OV interrupt <<<---------------------
+    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state before test
+    int_stat1="${int_stat1:58:2}"
+
+    i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $uv_hf             # Set OV_HF to value of UV to trigger OV interrupt
+    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state during test
+    int_stat2="${int_stat2:58:2}"
+
+    i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $ov_hf             # Restore original OV_HF value
+    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO)
+    int_stat3="${int_stat3:58:2}"
+
+    echo -n "  >>> Ch ${ch}: OV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
+    test "$int_stat1" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat2" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
+    test "$int_stat3" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -184,7 +214,7 @@ function vmon_check_dev()
 
     echo -e "${C_YELLOW}"
     echo -e "****************************************************"
-    echo -e "* Testing $1: Addr $dev on i2c bus $bus vrange_mult=$vrange_mult"
+    echo -e "* Testing $1: Addr $dev on i2c bus $bus *"
     echo -e "****************************************************${C_NONE}"
     
     # --->>> Loop over channels and test each one
