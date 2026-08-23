@@ -10,6 +10,12 @@ declare -r REG_BANK_SEL="0xF0"
 declare -a REG_VMON_LVL=("0x40" "0x41" "0x42" "0x43" "0x44" "0x45" "0x46" "0x47")   
 
 # -------------------- Bank 1 registers ------------------------
+declare -r REG_IEN_UVHF="0x13"   # Interrupt enable for Under Voltage High-Frequency
+declare -r REG_IEN_UVLF="0x14"   # Interrupt enable for Under Voltage Low-Frequency
+declare -r REG_IEN_OVHF="0x15"   # Interrupt enable for Over Voltage High-Frequency
+declare -r REG_IEN_OVLF="0x16"   # Interrupt enable for Over Voltage Low-Frequency
+
+declare -r REG_MON_CH_EN="0x1E"   # Monitor channel enable
 declare -r REG_VRANGE_MULT="0x1F"   
 
 # --->>> Under/Over voltage threshold registers for channels 0..7
@@ -99,7 +105,7 @@ function vmon_check_channel()
     local min_val typ_val max_val          # Min/typ/max values for channel $ch
     local coef mul                         # To convert ADC value to voltage
 
-    local int_stat1, int_stat2, int_stat3   # State of interrupt: Before, during, after test
+    local int_stat1 int_stat2 int_stat3   # State of interrupt: Before, during, after test
 
     bus=$1
     dev=$2
@@ -137,59 +143,62 @@ function vmon_check_channel()
         return
     fi
 
-    # --->>> Calculate voltage value for channel $ch according to H/W value
-    mon_lvl_v=$(awk -v a="$mon_lvl" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
-    uv_hf_v=$(awk -v a="$uv_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
-    ov_hf_v=$(awk -v a="$ov_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
-    uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
-    ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+    if [[ "$CL_PAR1" == "debug" ]]; then
+        # --->>> Calculate voltage value for channel $ch according to H/W value
+        mon_lvl_v=$(awk -v a="$mon_lvl" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+        uv_hf_v=$(awk -v a="$uv_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+        ov_hf_v=$(awk -v a="$ov_hf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+        uv_lf_v=$(awk -v a="$uv_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
+        ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
 
-    if ($CL_PAR1 == "debug"); then
-        echo -e "${C_BLUE_B}  >>> DEBUG: Ch ${ch}: min=$min_val, typ=$typ_val, max=$max_val, MON_LVL=$mon_lvl_v($mon_lvl) UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)${C_NONE}"
-    fi
+        echo -e "${C_BLUE_B}  >>> DEBUG: Ch ${ch}: min=$min_val, typ=$typ_val, max=$max_val, MON_LVL=$mon_lvl_v($mon_lvl)"
+        echo -e "         UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)${C_NONE}"
 
-    # ---->>> Check if voltage value is within min/max range
-    if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
-        echo -e "${C_RED}  >>> Ch ${ch}: ERROR: Less than min ($mon_lvl_v < $min_val)${C_NONE}"
-    elif (( $(awk -v x="$mon_lvl_v" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
-        echo -e "${C_RED}  >>> Ch ${ch}: ERROR: More than max ($mon_lvl_v > $max_val)${C_NONE}"
-    else
-        echo -e "${C_GREEN}  >>> Ch ${ch}: OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
+        # ---->>> Check if voltage value is within min/max range
+        if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
+            echo -e "${C_RED}  >>> Ch ${ch}: ERROR: Less than min ($mon_lvl_v < $min_val)${C_NONE}"
+        elif (( $(awk -v x="$mon_lvl_v" -v max="$max_val" 'BEGIN { print (x > max) }') )); then
+            echo -e "${C_RED}  >>> Ch ${ch}: ERROR: More than max ($mon_lvl_v > $max_val)${C_NONE}"
+        else
+            echo -e "${C_GREEN}  >>> Ch ${ch}: OK: $mon_lvl_v is within range [$min_val, $max_val]${C_NONE}"
+        fi
     fi
 
     # ---------------------->>> Check UV interrupt <<<---------------------
-    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state before test
+    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state before test
     int_stat1="${int_stat1:58:2}"
 
     i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $ov_hf             # Set UV_HF to value of OV to trigger UV interrupt
-    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state during test
+    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state during test
     int_stat2="${int_stat2:58:2}"
 
     i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $uv_hf             # Restore original UV_HF value
-    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO)
+    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO)
     int_stat3="${int_stat3:58:2}"
 
     echo -n "  >>> Ch ${ch}: UV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
-    test "$int_stat1" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
-    test "$int_stat2" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
-    test "$int_stat3" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat1" = "lo" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat2" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}"   || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_stat3" = "lo" && echo -e -n "${C_RED_B}FAIL${C_NONE}"  || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
+    echo
 
     # ---------------------->>> Check OV interrupt <<<---------------------
-    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state before test
+    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state before test
     int_stat1="${int_stat1:58:2}"
 
     i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $uv_hf             # Set OV_HF to value of UV to trigger OV interrupt
-    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO) state during test
+    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state during test
     int_stat2="${int_stat2:58:2}"
 
     i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $ov_hf             # Restore original OV_HF value
-    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_07")     # Read int (pk_07 GPIO)
+    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO)
     int_stat3="${int_stat3:58:2}"
 
     echo -n "  >>> Ch ${ch}: OV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
-    test "$int_stat1" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
-    test "$int_stat2" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
-    test "$int_stat3" = "lo" && echo -e "${C_RED_B}*** FAIL${C_NONE}" || echo -e "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat1" = "lo" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat2" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}"   || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_stat3" = "lo" && echo -e -n "${C_RED_B}FAIL${C_NONE}" || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
+    echo
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on VMON device
@@ -201,6 +210,8 @@ function vmon_check_dev()
 {
     local bus dev chlist ch_ind ch
     local vrange_mult
+    local ien_uvhf, ien_ovhf, ien_uvlf, ien_ovlf, mon_ch_en  # Interrupt enable bits for channel $ch
+ 
     declare -n chip_info="$1"
 
     bus=${chip_info[bus]}
@@ -215,6 +226,14 @@ function vmon_check_dev()
     echo -e "${C_YELLOW}"
     echo -e "****************************************************"
     echo -e "* Testing $1: Addr $dev on i2c bus $bus *"
+    if [[ "$CL_PAR1" == "debug" ]]; then
+        ien_uvhf=$(i2cget -y -f $bus $dev $REG_IEN_UVHF)   # Interrupt enable for Under Voltage High-Frequency
+        ien_uvlf=$(i2cget -y -f $bus $dev $REG_IEN_UVLF)   # Interrupt enable for Under Voltage Low-Frequency
+        ien_ovhf=$(i2cget -y -f $bus $dev $REG_IEN_OVHF)   # Interrupt enable for Over Voltage High-Frequency
+        ien_ovlf=$(i2cget -y -f $bus $dev $REG_IEN_OVLF)   # Interrupt enable for Over Voltage Low-Frequency
+        mon_ch_en=$(i2cget -y -f $bus $dev $REG_MON_CH_EN)   # Monitor channel enable
+        echo -e "* Int enable: UVHF=$ien_uvhf, UVLF=$ien_uvlf, OVHF=$ien_ovhf, OVLF=$ien_ovlf, MON_CH_EN=$mon_ch_en *"
+    fi
     echo -e "****************************************************${C_NONE}"
     
     # --->>> Loop over channels and test each one
