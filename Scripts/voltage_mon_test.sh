@@ -10,7 +10,7 @@ declare -r REG_BANK_SEL="0xF0"
 declare -a REG_VMON_LVL=("0x40" "0x41" "0x42" "0x43" "0x44" "0x45" "0x46" "0x47")   
 
 # -------------------- Bank 1 registers ------------------------
-declare -r REG_VRANGE_MUL="0x1F"   
+declare -r REG_VRANGE_MULT="0x1F"   
 
 # --->>> Under/Over voltage threshold registers for channels 0..7
 declare -a REG_UV_HF=("0x20" "0x30" "0x40" "0x50" "0x60" "0x70" "0x80" "0x90")   # UV_HF[i] for channels 0..7
@@ -76,7 +76,7 @@ declare -A vmon_chip_U95=( name "U95"  bus "0x00" dev "0x35" channels U95_channe
 declare -A vmon_chip_U114=(name "U114" bus "0x00" dev "0x34" channels U114_channels)
 declare -A vmon_chip_U148=(name "U148" bus "0x04" dev "0x33" channels U148_channels)  # ** Conflict on bus number
 
-vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114) ## vmon_chip_U148)
+vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114) # vmon_chip_U148)
 
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -101,6 +101,8 @@ function vmon_check_channel()
     dev=$2
     ch=$3
     declare -n ch_info="$4"
+    coef=$5
+    mul=$6
 
     # --->>> Read min/typ/max values for channel $ch
     min_val=${ch_info[min]}
@@ -108,9 +110,10 @@ function vmon_check_channel()
     max_val=${ch_info[max]}
 
     # ---->>>> Read channel data from H/W
-    i2cset -y -f $bus $dev REG_BANK_SEL 0x00   # Select Bank 0    
+    i2cset -y -f $bus $dev $REG_BANK_SEL 0x00   # Select Bank 0    
     mon_lvl=$(i2cget -y -f $bus $dev ${REG_VMON_LVL[$ch]})
-    i2cset -y -f $bus $dev REG_BANK_SEL 0x01   # Select Bank 1
+
+    i2cset -y -f $bus $dev $REG_BANK_SEL 0x01   # Select Bank 1
     uv_hf=$(i2cget -y -f $bus $dev ${REG_UV_HF[$ch]})
     ov_hf=$(i2cget -y -f $bus $dev ${REG_OV_HF[$ch]})
     uv_lf=$(i2cget -y -f $bus $dev ${REG_UV_LF[$ch]})
@@ -130,14 +133,14 @@ function vmon_check_channel()
         return
     fi
 
-    # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
-    if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
-        coef=0.8
-        mul=0.02
-    else
-        coef=0.2
-        mul=0.005
-    fi
+##    # ---->>> Calculate scaling factor for voltage range according to Max value of channel 
+##    if (( $(awk -v x="${ch_info[max]}" 'BEGIN { print (x > 1.475) }') )); then
+##        coef=0.8
+##        mul=0.02
+##    else
+##        coef=0.2
+##        mul=0.005
+##    fi
 
     # --->>> Calculate voltage value for channel $ch according to H/W value
     mon_lvl_v=$(awk -v a="$mon_lvl" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
@@ -167,17 +170,23 @@ function vmon_check_channel()
 function vmon_check_dev()
 {
     local bus dev chlist ch_ind ch
+    local vrange_mult
     declare -n chip_info="$1"
 
     bus=${chip_info[bus]}
     dev=${chip_info[dev]}
     declare -n chlist=${chip_info[channels]}
 
+    # Read mask of channel multiplaction (x1/x4) for this device
+    i2cset -y -f $bus $dev $REG_BANK_SEL 0x01   # Select Bank 1
+    vrange_mult=$(i2cget -y -f $bus $dev $REG_VRANGE_MULT)
+    vrange_mult=$(($vrange_mult))
+
     echo -e "${C_YELLOW}"
     echo -e "****************************************************"
-    echo -e "* Testing $1: Addr $dev on i2c bus $bus"
+    echo -e "* Testing $1: Addr $dev on i2c bus $bus vrange_mult=$vrange_mult"
     echo -e "****************************************************${C_NONE}"
-  
+    
     # --->>> Loop over channels and test each one
     ch_ind=0
     for ch in "${chlist[@]}"; do
@@ -186,7 +195,11 @@ function vmon_check_dev()
             continue
         fi
 
-        vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch"
+        if (((vrange_mult & (1 << $ch_ind)) != 0)); then
+            vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch" "0.8"  "0.020" # x4 range
+        else
+            vmon_check_channel "$bus" "$dev" "$ch_ind" "$ch" "0.2"  "0.005" # x1 range
+        fi
         ch_ind=$((ch_ind + 1))
     done
 }
