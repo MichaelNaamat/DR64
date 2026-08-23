@@ -210,7 +210,7 @@ function vmon_check_dev()
 {
     local bus dev chlist ch_ind ch
     local vrange_mult
-    local ien_uvhf, ien_ovhf, ien_uvlf, ien_ovlf, mon_ch_en  # Interrupt enable bits for channel $ch
+    local ien_uvhf ien_ovhf ien_uvlf ien_ovlf mon_ch_en  # Interrupt enable bits for channel $ch
  
     declare -n chip_info="$1"
 
