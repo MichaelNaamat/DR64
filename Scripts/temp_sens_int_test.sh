@@ -137,7 +137,7 @@ function temp75b_check_int()
     printf "  T-Low  test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
     test "$int_before" = "hi" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
     test "$int_during" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
-    test "$int_after"  = "hi" && echo -e "${C_GREEN_B}Pass,${C_NONE}" || echo -e "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_after"  = "hi" && echo -e    "${C_GREEN_B}Pass,${C_NONE}" || echo -e     "${C_RED_B}FAIL,${C_NONE}"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test interrupt line for temp75c-q1 tempratur sensor 
@@ -146,72 +146,72 @@ function temp75b_check_int()
 # $2 - Device number
 # Return: None
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function temp75c_check_int()
-{
-    local bus dev t_low t_high
-    bus=$1
-    dev=$2
-    
-    echo "*****************************************"
-    echo "* Testing Temp Dev $dev on i2c bus $bus"
-    echo "*****************************************"
-	
-    # --->>> Set Configuration Reg (0x01).:
-    #  - OS  =  '1': Set 'One-Shot' mode 
-    #  - FQ  = '00': Trigger ALERT adter 1 fault (defult)
-    #  - POL =  '0': ALERT active Low (default)
-    #  - TM  =  '1': ALERT in interrupt mode
-    #  - SD  =  '0': Clear 'Shutdown Mode' 
-    #  xx10 0010 = 0x22
-    i2cset -y -f $bus $dev $REG_CR 0x22
-    
-    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04) (suppress errors)
-    i2cset -y -f $bus $dev $REG_OS 0x00 >/dev/null 2>&1
-    
-    # --->>> Read current temperature from device (Addr=0x00)
-    echo -n "Current Temp: "
-    i2cget -y -f $bus $dev $REG_TEMP w
-    
-    # --->>> Read original values of T-Low/T-High for restoration after test
-    t_low=$(i2cget -y -f $bus $dev 0x02 w)
-    t_high=$(i2cget -y -f $bus $dev 0x03 w)
-	
-    # --->>> Set T-Low Temp limit (Addr 0x02) to 1c
-    i2cset -y -f $bus $dev $REG_TLOW 0x0001 w
-    
-    # --->>> Set T-High Temp limit (Addr 0x03) to 5c
-    i2cset -y -f $bus $dev $REG_HIGH 0x0005 w
-    
-    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04) (suppress errors)
-    i2cset -y -f $bus $dev $REG_OS 0x00>/dev/null 2>&1
-    
-    # --->>> Re-read values of T-Low/T-High
-    echo -n "T-Low: "
-    i2cget -y -f $bus $dev $REG_TLOW w
-    
-    echo -n "T-High: "
-    i2cget -y -f $bus $dev $REG_THIGH w
-    
-    # --->>> Read GPIO to see if interrupt is activated
-    # "gpio-357 (PC_04               |AViVA               ) in  lo IRQ"
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo "Int state: ${gpio_line:58:2}"
-    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN}>>> Test Pass${C_NONE}" || echo -e "${C_RED}*** Test FAIL ***${C_NONE}"
-
-    # --->>> Restore original values of T-Low/T-High before moving to next device
-    # DEBUG: Set T-High: 60c, T-Low: 58c
-    t_high="0x003C"
-    t_low="0x003A"
-
-    echo "Restoring Org T-Low: $t_low T-High: $t_high"
-    i2cset -y -f $bus $dev $REG_TLOW $t_low w
-    i2cset -y -f $bus $dev $REG_THIGH $t_high w 
-
-    # --->>> Re-test interrupt after restoring limits to normal values
-    i2cset -y -f $bus $dev $REG_OS 0x00>/dev/null 2>&1
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo "Normal Int state: ${gpio_line:58:2}"
-}
+## TBDfunction temp75c_check_int()
+## TBD{
+## TBD    local bus dev t_low t_high
+## TBD    bus=$1
+## TBD    dev=$2
+## TBD    
+## TBD    echo "*****************************************"
+## TBD    echo "* Testing Temp Dev $dev on i2c bus $bus"
+## TBD    echo "*****************************************"
+## TBD	
+## TBD    # --->>> Set Configuration Reg (0x01).:
+## TBD    #  - OS  =  '1': Set 'One-Shot' mode 
+## TBD    #  - FQ  = '00': Trigger ALERT adter 1 fault (defult)
+## TBD    #  - POL =  '0': ALERT active Low (default)
+## TBD    #  - TM  =  '1': ALERT in interrupt mode
+## TBD    #  - SD  =  '0': Clear 'Shutdown Mode' 
+## TBD    #  xx10 0010 = 0x22
+## TBD    i2cset -y -f $bus $dev $REG_CR 0x22
+## TBD    
+## TBD    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04) (suppress errors)
+## TBD    i2cset -y -f $bus $dev $REG_OS 0x00 >/dev/null 2>&1
+## TBD    
+## TBD    # --->>> Read current temperature from device (Addr=0x00)
+## TBD    echo -n "Current Temp: "
+## TBD    i2cget -y -f $bus $dev $REG_TEMP w
+## TBD    
+## TBD    # --->>> Read original values of T-Low/T-High for restoration after test
+## TBD    t_low=$(i2cget -y -f $bus $dev 0x02 w)
+## TBD    t_high=$(i2cget -y -f $bus $dev 0x03 w)
+## TBD	
+## TBD    # --->>> Set T-Low Temp limit (Addr 0x02) to 1c
+## TBD    i2cset -y -f $bus $dev $REG_TLOW 0x0001 w
+## TBD    
+## TBD    # --->>> Set T-High Temp limit (Addr 0x03) to 5c
+## TBD    i2cset -y -f $bus $dev $REG_HIGH 0x0005 w
+## TBD    
+## TBD    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04) (suppress errors)
+## TBD    i2cset -y -f $bus $dev $REG_OS 0x00>/dev/null 2>&1
+## TBD    
+## TBD    # --->>> Re-read values of T-Low/T-High
+## TBD    echo -n "T-Low: "
+## TBD    i2cget -y -f $bus $dev $REG_TLOW w
+## TBD    
+## TBD    echo -n "T-High: "
+## TBD    i2cget -y -f $bus $dev $REG_THIGH w
+## TBD    
+## TBD    # --->>> Read GPIO to see if interrupt is activated
+## TBD    # "gpio-357 (PC_04               |AViVA               ) in  lo IRQ"
+## TBD    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
+## TBD    echo "Int state: ${gpio_line:58:2}"
+## TBD    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN}>>> Test Pass${C_NONE}" || echo -e "${C_RED}*** Test FAIL ***${C_NONE}"
+## TBD
+## TBD    # --->>> Restore original values of T-Low/T-High before moving to next device
+## TBD    # DEBUG: Set T-High: 60c, T-Low: 58c
+## TBD    t_high="0x003C"
+## TBD    t_low="0x003A"
+## TBD
+## TBD    echo "Restoring Org T-Low: $t_low T-High: $t_high"
+## TBD    i2cset -y -f $bus $dev $REG_TLOW $t_low w
+## TBD    i2cset -y -f $bus $dev $REG_THIGH $t_high w 
+## TBD
+## TBD    # --->>> Re-test interrupt after restoring limits to normal values
+## TBD    i2cset -y -f $bus $dev $REG_OS 0x00>/dev/null 2>&1
+## TBD    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
+## TBD    echo "Normal Int state: ${gpio_line:58:2}"
+## TBD}
 
 ############################################################################
 # ---->>>> Call tests for all devices...
