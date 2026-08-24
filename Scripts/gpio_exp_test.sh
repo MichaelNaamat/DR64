@@ -41,6 +41,8 @@ function gpio_check_dev()
     echo "* Testing GPIO ${chip_info[name]}: Addr $dev on i2c bus $bus"
     echo "*******************************************************"
     echo -e -n "${C_NONE}"
+
+    # --->>> Read GPIO registers
     din0=$(i2cget -y -f $bus $dev $REG_GPIO_DIN0)
     din1=$(i2cget -y -f $bus $dev $REG_GPIO_DIN1)
     dout0=$(i2cget -y -f $bus $dev $REG_GPIO_DOUT0)
@@ -50,10 +52,17 @@ function gpio_check_dev()
     conf0=$(i2cget -y -f $bus $dev $REG_GPIO_CONF0)
     conf1=$(i2cget -y -f $bus $dev $REG_GPIO_CONF1)
 
-    outval0=$(($dout0&~$conf0))   # Masking the output value with the configuration value to ignore input pins
-    inval0=$(($din0&~$conf0))     # Masking the input value with the configuration value to ignore input pins
-    outval1=$(($dout1&~$conf1))   # Masking the output value with the configuration value to ignore input pins
-    inval1=$(($din1&~$conf1))     # Masking the input value with the configuration value to ignore input pins
+    # --->>> Masking the input/output value with the configuration value to ignore input pins
+    outval0=$(($dout0&~$conf0))   
+    inval0=$(($din0&~$conf0))     
+    outval1=$(($dout1&~$conf1))   
+    inval1=$(($din1&~$conf1))     
+
+    # --->>> XOR din/dout with Polarity mask to get the actual input/output values (after applying polarity inversion)
+    inval0=$(($inval0^$pol0))
+    outval0=$(($outval0^$pol0))
+    inval1=$(($inval1^$pol1))
+    outval1=$(($outval1^$pol1))
 
     echo -n "  Port0: DIN=$din0, DOUT=$dout0, POL=$pol0, CONF=$conf0"
     test "$inval0" -eq "$outval0" && printf "  ${C_GREEN_B}OK (0x%.2X==0x%.2X)${C_NONE}\n" $inval0 $outval0 \

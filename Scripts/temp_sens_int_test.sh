@@ -47,6 +47,9 @@ function temp75b_check_int()
 {
     local bus dev cur_temp org_t_low org_t_high 
     local chip_info
+    local int_before int_during int_after
+    local cur_temp t_low t_high 
+
     declare -n chip_info="$1"
 
     bus=${chip_info[bus]}
@@ -61,6 +64,7 @@ function temp75b_check_int()
     echo "* Testing Temp Sens ${chip_info[name]}: Addr $dev on i2c bus $bus"
     echo "****************************************************"
     echo -e -n "${C_NONE}"
+    sleep 0.1
 	
     # --->>> Set Configuration Reg (0x01).:
     # OS (15)    = '0'
@@ -71,47 +75,69 @@ function temp75b_check_int()
     # SD  (8)    = '0'   | Device is in continuous conversion mode (default)
     # Mask: 0000 0010 = 0x02
     i2cset -y -f $bus $dev $REG_CR 0x02
-      
-    # --->>> Read current temperature from device (Addr=0x00) & High/Low limits
-    read_temp_reg $bus $dev     # DEBUG & clear int line
-    
-    # --->>> Print int state
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo "Pre-test Int state: ${gpio_line:58:2}"
-
+         
     # ============ T-High test: Set T-High to +5c (T-Low stay -40c)
-    i2cset -y -f $bus $dev $REG_THIGH 0x0005 w
-
-    # --->>> Print int state
+    # --->>> Save int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo -n "T-High Int state(${gpio_line:58:2}): "
-    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
-    read_temp_reg $bus $dev     # DEBUG & clear int line
+    int_before=${gpio_line:58:2}
 
-    # ============ T-Low test: Set T-Low to +60c & T-High to +65c)
-    i2cset -y -f $bus $dev $REG_TLOW 0x003C w
-    i2cset -y -f $bus $dev $REG_THIGH 0x0041 w
+    i2cset -y -f $bus $dev $REG_THIGH +5 w    # Set T-High to +5c
 
-    # --->>> Print int state
+    # --->>> Save int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo -n "T-Low Int state(${gpio_line:58:2}): "
-    test "${gpio_line:58:2}" = "lo" && echo -e "${C_GREEN_B}Pass${C_NONE}" || echo -e "${C_RED_B}*** FAIL${C_NONE}"
+    int_during=${gpio_line:58:2}
 
-    # --->>> Restore original values of T-Low/T-High before moving to next device
-    # DEBUG: Set T-High: +60c, T-Low: -40c
-#    t_high="0x003C"
-#    t_low="0x00D8"
-
-    echo "Restoring Org T-Low: $org_t_low T-High: $org_t_high"
+    # --->>> Restor normal values 
     i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
     i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
-    i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
-    i2cset -y -f $bus $dev $REG_THIGH $org_t_high w 
-    read_temp_reg $bus $dev     # DEBUG & clear int line
 
-    # --->>> Re-test interrupt after restoring limits to normal values
+    # --->>> Read T-Low/T-High values & clear interrupt
+    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
+    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
+    cur_temp=$(i2cget -y -f $bus $dev $REG_TEMP w)
+    cur_temp=$(($cur_temp&0xFF))   # Take only the integer degrees
+ 
+    # --->>> Save int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    echo "Post-test Int state: ${gpio_line:58:2}"
+    int_after=${gpio_line:58:2}
+    
+    # ---->>> Print results of interrupt test
+    printf "  T-High test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
+    test "$int_before" = "hi" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_during" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_after" = "hi" && echo -e "${C_GREEN_B}Pass,${C_NONE}" || echo -e "${C_RED_B}FAIL,${C_NONE}"
+
+    # --->>> Save int state
+    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
+    int_before=${gpio_line:58:2}
+    
+    # ============ T-Low test: Set T-Low to +60c & T-High to +65c)
+    i2cset -y -f $bus $dev $REG_TLOW +60 w
+    i2cset -y -f $bus $dev $REG_THIGH +65 w
+
+    # --->>> Save int state
+    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
+    int_during=${gpio_line:58:2}
+
+    # --->>> Restor normal values 
+    i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
+    i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
+
+    # --->>> Read to clear int
+    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
+    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
+    cur_temp=$(i2cget -y -f $bus $dev $REG_TEMP w)
+    cur_temp=$(($cur_temp&0xFF))   # Take only the integer degrees
+
+    # --->>> Save int state
+    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
+    int_after=${gpio_line:58:2}
+
+    # ---->>> Print results of interrupt test
+    printf "  T-Low  test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
+    test "$int_before" = "hi" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_during" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
+    test "$int_after"  = "hi" && echo -e "${C_GREEN_B}Pass,${C_NONE}" || echo -e "${C_RED_B}FAIL,${C_NONE}"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test interrupt line for temp75c-q1 tempratur sensor 
