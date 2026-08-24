@@ -152,7 +152,7 @@ function vmon_check_channel()
         ov_lf_v=$(awk -v a="$ov_lf" -v coef="$coef" -v mul="$mul" 'BEGIN { printf "%.3f", coef + a * mul }')
 
         echo -e "${C_BLUE_B}  >>> DEBUG: Ch ${ch}: min=$min_val, typ=$typ_val, max=$max_val, MON_LVL=$mon_lvl_v($mon_lvl)"
-        echo -e "         UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)${C_NONE}"
+        echo -e "                             UV_HF=$uv_hf_v($uv_hf) OV_HF=$ov_hf_v($ov_hf) UV_LF=$uv_lf_v($uv_lf) OV_LF=$ov_lf_v($ov_lf)${C_NONE}"
 
         # ---->>> Check if voltage value is within min/max range
         if (( $(awk -v x="$mon_lvl_v" -v min="$min_val" 'BEGIN { print (x < min) }') )); then
