@@ -1,0 +1,231 @@
+gpiochip4: GPIOs 257-272, parent: i2c/4-0074, 4-0074, can sleep:
+ gpio-257 (4-74-00             |AViVA               ) out hi 
+ gpio-258 (4-74-01             |AViVA               ) out hi 
+ gpio-259 (4-74-02             |AViVA               ) out lo 
+ gpio-260 (4-74-03             |AViVA               ) out hi 
+ gpio-261 (4-74-04             |AViVA               ) out lo 
+ gpio-262 (4-74-05             |AViVA               ) out lo 
+ gpio-263 (4-74-06             |AViVA               ) out hi 
+ gpio-264 (4-74-07             |AViVA               ) out hi 
+ gpio-265 (4-74-08             |AViVA               ) out lo 
+ gpio-266 (4-74-09             |AViVA               ) in  hi 
+ gpio-267 (4-74-10             |AViVA               ) in  hi 
+ gpio-268 (4-74-11             |AViVA               ) in  lo 
+ gpio-269 (4-74-12             |AViVA               ) out hi 
+ gpio-270 (4-74-13             |AViVA               ) out lo 
+ gpio-271 (4-74-14             |AViVA               ) out lo 
+ gpio-272 (4-74-15             |AViVA               ) in  lo 
+
+gpiochip3: GPIOs 273-288, parent: i2c/0-0077, 0-0077, can sleep:
+ gpio-273 (0-77-00             |AViVA               ) out lo 
+ gpio-274 (0-77-01             |AViVA               ) out lo 
+ gpio-275 (0-77-02             |AViVA               ) out lo 
+ gpio-276 (0-77-03             |AViVA               ) out lo 
+ gpio-277 (0-77-04             |AViVA               ) out lo 
+ gpio-278 (0-77-05             |AViVA               ) out lo 
+ gpio-279 (0-77-06             |AViVA               ) out lo 
+ gpio-280 (0-77-07             |AViVA               ) out lo 
+ gpio-281 (0-77-08             |AViVA               ) out lo 
+ gpio-282 (0-77-09             |AViVA               ) out lo 
+ gpio-283 (0-77-10             |AViVA               ) out lo 
+ gpio-284 (0-77-11             |AViVA               ) out lo 
+ gpio-285 (0-77-12             |AViVA               ) out lo 
+ gpio-286 (0-77-13             |AViVA               ) out lo 
+ gpio-287 (0-77-14             |AViVA               ) out lo 
+ gpio-288 (0-77-15             |AViVA               ) out lo 
+
+gpiochip2: GPIOs 289-304, parent: i2c/0-0075, 0-0075, can sleep:
+ gpio-289 (0-75-00             |AViVA               ) out hi 
+ gpio-290 (0-75-01             |AViVA               ) out hi 
+ gpio-291 (0-75-02             |AViVA               ) out lo 
+ gpio-292 (0-75-03             |AViVA               ) out lo 
+ gpio-293 (0-75-04             |AViVA               ) out lo 
+ gpio-294 (0-75-05             |AViVA               ) out hi 
+ gpio-295 (0-75-06             |AViVA               ) out lo 
+ gpio-296 (0-75-07             |AViVA               ) out lo 
+ gpio-297 (0-75-08             |AViVA               ) in  lo 
+ gpio-298 (0-75-09             |AViVA               ) out lo 
+ gpio-299 (0-75-10             |AViVA               ) out hi 
+ gpio-300 (0-75-11             |AViVA               ) out lo 
+ gpio-301 (0-75-12             |AViVA               ) in  lo 
+ gpio-302 (0-75-13             |AViVA               ) out lo 
+ gpio-303 (0-75-14             |AViVA               ) out lo 
+ gpio-304 (0-75-15             |AViVA               ) in  lo 
+gpiochip1: GPIOs 305-320, parent: i2c/0-0074, 0-0074, can sleep:
+ gpio-305 (0-74-00             |AViVA               ) in  hi 
+ gpio-306 (0-74-01             |AViVA               ) out lo 
+ gpio-307 (0-74-02             |AViVA               ) out lo 
+ gpio-308 (0-74-03             |AViVA               ) in  hi 
+ gpio-309 (0-74-04             |AViVA               ) in  hi 
+ gpio-310 (0-74-05             |AViVA               ) out lo 
+ gpio-311 (0-74-06             |AViVA               ) out hi 
+ gpio-312 (0-74-07             |AViVA               ) out hi 
+ gpio-313 (0-74-08             |AViVA               ) out lo 
+ gpio-314 (0-74-09             |AViVA               ) out lo 
+ gpio-315 (0-74-10             |AViVA               ) out hi 
+ gpio-316 (0-74-11             |AViVA               ) out lo 
+ gpio-317 (0-74-12             |AViVA               ) out lo 
+ gpio-318 (0-74-13             |AViVA               ) out lo 
+ gpio-319 (0-74-14             |AViVA               ) out lo 
+ gpio-320 (0-74-15             |AViVA               ) out hi 
+gpiochip0: GPIOs 321-511, parent: platform/4009d700.siul2-gpio, 4009d700.siul2-gpio:
+ gpio-321 (PA_00               )
+ gpio-322 (PA_01               )
+ gpio-323 (PA_02               )
+ gpio-324 (PA_03               )
+ gpio-325 (PA_04               )
+ gpio-326 (PA_05               )
+ gpio-327 (PA_06               |AViVA               ) out hi 
+ gpio-328 (PA_07               |AViVA               ) out lo 
+ gpio-329 (PA_08               |AViVA               ) in  hi 
+ gpio-330 (PA_09               |AViVA               ) in  hi 
+ gpio-331 (PA_10               |AViVA               ) in  hi 
+ gpio-332 (PA_11               |AViVA               ) in  lo 
+ gpio-333 (PA_12               |AViVA               ) out hi 
+ gpio-334 (PA_13               |AViVA               ) out hi 
+ gpio-335 (PA_14               |AViVA               ) out hi 
+ gpio-336 (PA_15               |AViVA               ) out lo 
+ gpio-337 (PB_00               |sda                 ) in  hi 
+ gpio-338 (PB_01               |scl                 ) out hi 
+ gpio-339 (PB_02               |AViVA               ) out hi 
+ gpio-340 (PB_03               |scl                 ) out hi 
+ gpio-341 (PB_04               |sda                 ) in  hi 
+ gpio-342 (PB_05               |scl                 ) out hi 
+ gpio-343 (PB_06               |sda                 ) in  hi 
+ gpio-344 (PB_07               |AViVA               ) in  hi 
+ gpio-345 (PB_08               |AViVA               ) in  hi IRQ 
+ gpio-346 (PB_09               )
+ gpio-347 (PB_10               |AViVA               ) in  lo IRQ 
+ gpio-348 (PB_11               )
+ gpio-349 (PB_12               )
+ gpio-350 (PB_13               )
+ gpio-351 (PB_14               )
+ gpio-352 (PB_15               |AViVA               ) in  hi IRQ 
+ gpio-353 (PC_00               |AViVA               ) out lo 
+ gpio-354 (PC_01               |sda                 ) in  hi 
+ gpio-355 (PC_02               |scl                 ) out hi 
+ gpio-356 (PC_03               |AViVA               ) in  hi IRQ 
+ gpio-357 (PC_04               |AViVA               ) in  hi IRQ 
+ gpio-358 (PC_05               )
+ gpio-359 (PC_06               )
+ gpio-360 (PC_07               )
+ gpio-361 (PC_08               |AViVA               ) in  hi IRQ 
+ gpio-362 (PC_09               )
+ gpio-363 (PC_10               )
+ gpio-364 (PC_11               )
+ gpio-365 (PC_12               )
+ gpio-366 (PC_13               |AViVA               ) out hi 
+ gpio-367 (PC_14               )
+ gpio-368 (PC_15               )
+ gpio-369 (PD_00               )
+ gpio-370 (PD_01               )
+ gpio-371 (PD_02               )
+ gpio-372 (PD_03               )
+ gpio-373 (PD_04               )
+ gpio-374 (PD_05               )
+ gpio-375 (PD_06               )
+ gpio-376 (PD_07               )
+ gpio-377 (PD_08               )
+ gpio-378 (PD_09               )
+ gpio-379 (PD_10               )
+ gpio-380 (PD_11               |AViVA               ) out lo 
+ gpio-381 (PD_12               |AViVA               ) out hi 
+ gpio-382 (PD_13               |AViVA               ) out hi 
+ gpio-383 (PD_14               |AViVA               ) out hi 
+ gpio-384 (PD_15               |AViVA               ) out hi 
+ gpio-385 (PE_00               |AViVA               ) out lo 
+ gpio-386 (PE_01               |AViVA               ) out lo 
+ gpio-387 (PE_02               )
+ gpio-388 (PE_03               )
+ gpio-389 (PE_04               )
+ gpio-390 (PE_05               )
+ gpio-391 (PE_06               )
+ gpio-392 (PE_07               )
+ gpio-393 (PE_08               )
+ gpio-394 (PE_09               )
+ gpio-395 (PE_10               )
+ gpio-396 (PE_11               )
+ gpio-397 (PE_12               )
+ gpio-398 (PE_13               )
+ gpio-399 (PE_14               |AViVA               ) out hi 
+ gpio-400 (PE_15               |AViVA               ) out hi 
+ gpio-401 (PF_00               )
+ gpio-402 (PF_01               )
+ gpio-403 (PF_02               |AViVA               ) out hi 
+ gpio-404 (PF_03               |AViVA               ) out lo 
+ gpio-405 (PF_04               |AViVA               ) out lo 
+ gpio-406 (PF_05               )
+ gpio-407 (PF_06               )
+ gpio-408 (PF_07               )
+ gpio-409 (PF_08               )
+ gpio-410 (PF_09               )
+ gpio-411 (PF_10               )
+ gpio-412 (PF_11               )
+ gpio-413 (PF_12               )
+ gpio-414 (PF_13               )
+ gpio-415 (PF_14               )
+ gpio-416 (PF_15               |AViVA               ) out lo 
+ gpio-417 (PG_00               )
+ gpio-418 (PG_01               )
+ gpio-419 (PG_02               )
+ gpio-420 (PG_03               )
+ gpio-421 (PG_04               )
+ gpio-422 (PG_05               )
+ gpio-433 (PH_00               |AViVA               ) in  hi 
+ gpio-434 (PH_01               |AViVA               ) in  hi IRQ 
+ gpio-435 (PH_02               |AViVA               ) in  lo IRQ 
+ gpio-436 (PH_03               |AViVA               ) in  hi IRQ 
+ gpio-437 (PH_04               |AViVA               ) out hi 
+ gpio-438 (PH_05               |AViVA               ) in  hi IRQ 
+ gpio-439 (PH_06               |AViVA               ) out hi 
+ gpio-440 (PH_07               |AViVA               ) out hi 
+ gpio-441 (PH_08               |AViVA               ) out hi 
+ gpio-442 (PH_09               |AViVA               ) out hi 
+ gpio-443 (PH_10               |AViVA               ) out hi 
+ gpio-465 (PJ_00               |AViVA               ) out hi 
+ gpio-466 (PJ_01               )
+ gpio-467 (PJ_02               )
+ gpio-468 (PJ_03               )
+ gpio-469 (PJ_04               )
+ gpio-470 (PJ_05               )
+ gpio-471 (PJ_06               )
+ gpio-472 (PJ_07               |AViVA               ) in  lo IRQ 
+ gpio-473 (PJ_08               |AViVA               ) in  lo IRQ 
+ gpio-474 (PJ_09               |AViVA               ) out hi 
+ gpio-475 (PJ_10               |AViVA               ) in  lo 
+ gpio-476 (PJ_11               )
+ gpio-477 (PJ_12               )
+ gpio-478 (PJ_13               )
+ gpio-479 (PJ_14               )
+ gpio-480 (PJ_15               |AViVA               ) out hi 
+ gpio-481 (PK_00               |AViVA               ) in  hi IRQ 
+ gpio-482 (PK_01               )
+ gpio-483 (PK_02               )
+ gpio-484 (PK_03               |AViVA               ) in  lo 
+ gpio-485 (PK_04               |AViVA               ) in  lo 
+ gpio-486 (PK_05               |AViVA               ) in  hi IRQ 
+ gpio-487 (PK_06               |AViVA               ) in  hi 
+ gpio-488 (PK_07               |AViVA               ) out lo 
+ gpio-489 (PK_08               |AViVA               ) in  lo IRQ 
+ gpio-490 (PK_09               )
+ gpio-491 (PK_10               )
+ gpio-492 (PK_11               )
+ gpio-493 (PK_12               )
+ gpio-494 (PK_13               )
+ gpio-495 (PK_14               )
+ gpio-496 (PK_15               )
+ gpio-497 (PL_00               )
+ gpio-498 (PL_01               |AViVA               ) in  lo IRQ 
+ gpio-499 (PL_02               |AViVA               ) in  lo IRQ 
+ gpio-500 (PL_03               |AViVA               ) in  hi IRQ 
+ gpio-501 (PL_04               |AViVA               ) out hi 
+ gpio-502 (PL_05               |AViVA               ) in  hi 
+ gpio-503 (PL_06               |AViVA               ) in  lo 
+ gpio-504 (PL_07               )
+ gpio-505 (PL_08               |AViVA               ) in  lo 
+ gpio-506 (PL_09               |AViVA               ) in  lo 
+ gpio-507 (PL_10               |AViVA               ) in  hi IRQ 
+ gpio-508 (PL_11               |AViVA               ) in  hi IRQ 
+ gpio-509 (PL_12               |AViVA               ) in  hi IRQ 
+ gpio-510 (PL_13               |AViVA               ) in  hi IRQ 
+ gpio-511 (PL_14               |AViVA               ) in  lo IRQ 

@@ -1,0 +1,180 @@
+[0;33m
+****************************************************
+* Testing vmon_chip_U93: Addr 0x37 on i2c bus 0x00 *
+* Int enable: UVHF=0xff, UVLF=0xff, OVHF=0xff, OVLF=0xff, MON_CH_EN=0xff *
+****************************************************[0m
+[1;34m  >>> DEBUG: Ch 0: min=0.84875, typ=0.875, max=0.896875, MON_LVL=0.885(137)
+         UV_HF=0.830(126) OV_HF=0.910(142) UV_LF=0.830(126) OV_LF=0.910(142)[0m
+[0;32m  >>> Ch 0: OK: 0.885 is within range [0.84875, 0.896875][0m
+  >>> Ch 0: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 0: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 1: min=1.71, typ=1.8, max=1.89, MON_LVL=1.780(49)
+         UV_HF=1.680(44) OV_HF=1.920(56) UV_LF=1.680(44) OV_LF=1.920(56)[0m
+[0;32m  >>> Ch 1: OK: 1.780 is within range [1.71, 1.89][0m
+  >>> Ch 1: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 1: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 2: min=1.746, typ=1.8, max=1.854, MON_LVL=1.780(49)
+         UV_HF=1.740(47) OV_HF=1.860(53) UV_LF=1.740(47) OV_LF=1.860(53)[0m
+[0;32m  >>> Ch 2: OK: 1.780 is within range [1.746, 1.854][0m
+  >>> Ch 2: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 2: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 3: min=0.817, typ=0.86, max=0.903, MON_LVL=0.860(132)
+         UV_HF=0.810(122) OV_HF=0.910(142) UV_LF=0.810(122) OV_LF=0.910(142)[0m
+[0;32m  >>> Ch 3: OK: 0.860 is within range [0.817, 0.903][0m
+  >>> Ch 3: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 3: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 4: min=0.7125, typ=0.75, max=0.7875, MON_LVL=0.750(110)
+         UV_HF=0.700(100) OV_HF=0.800(120) UV_LF=0.700(100) OV_LF=0.800(120)[0m
+[0;32m  >>> Ch 4: OK: 0.750 is within range [0.7125, 0.7875][0m
+  >>> Ch 4: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 4: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 5: min=1.0185, typ=1.05, max=1.0815, MON_LVL=1.050(170)
+         UV_HF=1.005(161) OV_HF=1.090(178) UV_LF=1.005(161) OV_LF=1.090(178)[0m
+[0;32m  >>> Ch 5: OK: 1.050 is within range [1.0185, 1.0815][0m
+  >>> Ch 5: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 5: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 6: min=0.475, typ=0.5, max=0.525, MON_LVL=0.500(60)
+         UV_HF=0.460(52) OV_HF=0.535(67) UV_LF=0.460(52) OV_LF=0.535(67)[0m
+[0;32m  >>> Ch 6: OK: 0.500 is within range [0.475, 0.525][0m
+  >>> Ch 6: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 6: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 7: min=1.71, typ=1.8, max=1.89, MON_LVL=1.800(50)
+         UV_HF=1.680(44) OV_HF=1.920(56) UV_LF=1.680(44) OV_LF=1.920(56)[0m
+[0;32m  >>> Ch 7: OK: 1.800 is within range [1.71, 1.89][0m
+  >>> Ch 7: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 7: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[0;33m
+****************************************************
+* Testing vmon_chip_U94: Addr 0x36 on i2c bus 0x00 *
+* Int enable: UVHF=0xff, UVLF=0xff, OVHF=0xff, OVLF=0xff, MON_CH_EN=0xff *
+****************************************************[0m
+[1;34m  >>> DEBUG: Ch 0: min=0.84875, typ=0.875, max=0.896875, MON_LVL=0.890(138)
+         UV_HF=0.830(126) OV_HF=0.910(142) UV_LF=0.830(126) OV_LF=0.910(142)[0m
+[0;32m  >>> Ch 0: OK: 0.890 is within range [0.84875, 0.896875][0m
+  >>> Ch 0: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 0: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 1: min=1.71, typ=1.8, max=1.89, MON_LVL=1.800(50)
+         UV_HF=1.680(44) OV_HF=1.920(56) UV_LF=1.680(44) OV_LF=1.920(56)[0m
+[0;32m  >>> Ch 1: OK: 1.800 is within range [1.71, 1.89][0m
+  >>> Ch 1: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 1: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 2: min=1.746, typ=1.8, max=1.854, MON_LVL=1.800(50)
+         UV_HF=1.740(47) OV_HF=1.860(53) UV_LF=1.740(47) OV_LF=1.860(53)[0m
+[0;32m  >>> Ch 2: OK: 1.800 is within range [1.746, 1.854][0m
+  >>> Ch 2: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 2: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 3: min=0.817, typ=0.86, max=0.903, MON_LVL=0.860(132)
+         UV_HF=0.810(122) OV_HF=0.910(142) UV_LF=0.810(122) OV_LF=0.910(142)[0m
+[0;32m  >>> Ch 3: OK: 0.860 is within range [0.817, 0.903][0m
+  >>> Ch 3: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 3: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 4: min=0.7125, typ=0.75, max=0.7875, MON_LVL=0.750(110)
+         UV_HF=0.700(100) OV_HF=0.800(120) UV_LF=0.700(100) OV_LF=0.800(120)[0m
+[0;32m  >>> Ch 4: OK: 0.750 is within range [0.7125, 0.7875][0m
+  >>> Ch 4: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 4: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 5: min=1.0185, typ=1.05, max=1.0815, MON_LVL=1.055(171)
+         UV_HF=1.005(161) OV_HF=1.090(178) UV_LF=1.005(161) OV_LF=1.090(178)[0m
+[0;32m  >>> Ch 5: OK: 1.055 is within range [1.0185, 1.0815][0m
+  >>> Ch 5: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 5: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 6: min=0.475, typ=0.5, max=0.525, MON_LVL=0.500(60)
+         UV_HF=0.460(52) OV_HF=0.535(67) UV_LF=0.460(52) OV_LF=0.535(67)[0m
+[0;32m  >>> Ch 6: OK: 0.500 is within range [0.475, 0.525][0m
+  >>> Ch 6: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 6: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 7: min=1.71, typ=1.8, max=1.89, MON_LVL=1.800(50)
+         UV_HF=1.680(44) OV_HF=1.920(56) UV_LF=1.680(44) OV_LF=1.920(56)[0m
+[0;32m  >>> Ch 7: OK: 1.800 is within range [1.71, 1.89][0m
+  >>> Ch 7: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 7: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[0;33m
+****************************************************
+* Testing vmon_chip_U95: Addr 0x35 on i2c bus 0x00 *
+* Int enable: UVHF=0xff, UVLF=0xff, OVHF=0xff, OVLF=0xff, MON_CH_EN=0xff *
+****************************************************[0m
+[1;34m  >>> DEBUG: Ch 0: min=1.03835, typ=1.1, max=1.14765, MON_LVL=1.105(181)
+         UV_HF=1.030(166) OV_HF=1.155(191) UV_LF=1.030(166) OV_LF=1.155(191)[0m
+[0;32m  >>> Ch 0: OK: 1.105 is within range [1.03835, 1.14765][0m
+  >>> Ch 0: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 0: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 1: min=4.75, typ=5, max=5.25, MON_LVL=4.960(208)
+         UV_HF=4.700(195) OV_HF=5.300(225) UV_LF=4.700(195) OV_LF=5.300(225)[0m
+[0;32m  >>> Ch 1: OK: 4.960 is within range [4.75, 5.25][0m
+  >>> Ch 1: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 1: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 2: min=1.14, typ=1.2, max=1.26, MON_LVL=1.200(200)
+         UV_HF=1.130(186) OV_HF=1.270(214) UV_LF=1.130(186) OV_LF=1.270(214)[0m
+[0;32m  >>> Ch 2: OK: 1.200 is within range [1.14, 1.26][0m
+  >>> Ch 2: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 2: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 3: min=1.12575, typ=1.185, max=1.24425, MON_LVL=1.185(197)
+         UV_HF=1.120(184) OV_HF=1.250(210) UV_LF=1.120(184) OV_LF=1.250(210)[0m
+[0;32m  >>> Ch 3: OK: 1.185 is within range [1.12575, 1.24425][0m
+  >>> Ch 3: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 3: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 4: min=0.76, typ=0.8, max=0.84, MON_LVL=0.800(120)
+         UV_HF=0.755(111) OV_HF=0.845(129) UV_LF=0.755(111) OV_LF=0.845(129)[0m
+[0;32m  >>> Ch 4: OK: 0.800 is within range [0.76, 0.84][0m
+  >>> Ch 4: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 4: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 5: min=3.135, typ=3.3, max=3.465, MON_LVL=3.300(125)
+         UV_HF=3.100(115) OV_HF=3.500(135) UV_LF=3.100(115) OV_LF=3.500(135)[0m
+[0;32m  >>> Ch 5: OK: 3.300 is within range [3.135, 3.465][0m
+  >>> Ch 5: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 5: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 6: min=1.03835, typ=1.1, max=1.14765, MON_LVL=1.105(181)
+         UV_HF=1.030(166) OV_HF=1.155(191) UV_LF=1.030(166) OV_LF=1.155(191)[0m
+[0;32m  >>> Ch 6: OK: 1.105 is within range [1.03835, 1.14765][0m
+  >>> Ch 6: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 6: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 7: min=4.75, typ=5, max=5.25, MON_LVL=4.960(208)
+         UV_HF=4.740(197) OV_HF=5.260(223) UV_LF=4.740(197) OV_LF=5.260(223)[0m
+[0;32m  >>> Ch 7: OK: 4.960 is within range [4.75, 5.25][0m
+  >>> Ch 7: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 7: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[0;33m
+****************************************************
+* Testing vmon_chip_U114: Addr 0x34 on i2c bus 0x00 *
+* Int enable: UVHF=0xff, UVLF=0xff, OVHF=0xff, OVLF=0xff, MON_CH_EN=0xff *
+****************************************************[0m
+[1;34m  >>> DEBUG: Ch 0: min=0.76, typ=0.8, max=0.84, MON_LVL=0.805(121)
+         UV_HF=0.775(115) OV_HF=0.825(125) UV_LF=0.775(115) OV_LF=0.825(125)[0m
+[0;32m  >>> Ch 0: OK: 0.805 is within range [0.76, 0.84][0m
+  >>> Ch 0: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 0: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 1: min=1.14, typ=1.2, max=1.26, MON_LVL=1.200(200)
+         UV_HF=1.165(193) OV_HF=1.235(207) UV_LF=1.165(193) OV_LF=1.235(207)[0m
+[0;32m  >>> Ch 1: OK: 1.200 is within range [1.14, 1.26][0m
+  >>> Ch 1: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 1: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 2: min=0.76, typ=0.8, max=0.84, MON_LVL=0.800(120)
+         UV_HF=0.775(115) OV_HF=0.825(125) UV_LF=0.775(115) OV_LF=0.825(125)[0m
+[0;32m  >>> Ch 2: OK: 0.800 is within range [0.76, 0.84][0m
+  >>> Ch 2: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 2: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 3: min=1.14, typ=1.2, max=1.26, MON_LVL=1.200(200)
+         UV_HF=1.165(193) OV_HF=1.235(207) UV_LF=1.165(193) OV_LF=1.235(207)[0m
+[0;32m  >>> Ch 3: OK: 1.200 is within range [1.14, 1.26][0m
+  >>> Ch 3: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 3: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 4: min=0.798, typ=0.84, max=0.882, MON_LVL=0.850(130)
+         UV_HF=0.815(123) OV_HF=0.865(133) UV_LF=0.815(123) OV_LF=0.865(133)[0m
+[0;32m  >>> Ch 4: OK: 0.850 is within range [0.798, 0.882][0m
+  >>> Ch 4: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 4: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 5: min=1.14, typ=1.2, max=1.26, MON_LVL=1.205(201)
+         UV_HF=1.165(193) OV_HF=1.235(207) UV_LF=1.165(193) OV_LF=1.235(207)[0m
+[0;32m  >>> Ch 5: OK: 1.205 is within range [1.14, 1.26][0m
+  >>> Ch 5: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 5: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 6: min=1.71, typ=1.8, max=1.89, MON_LVL=1.800(50)
+         UV_HF=1.740(47) OV_HF=1.860(53) UV_LF=1.740(47) OV_LF=1.860(53)[0m
+[0;32m  >>> Ch 6: OK: 1.800 is within range [1.71, 1.89][0m
+  >>> Ch 6: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 6: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+[1;34m  >>> DEBUG: Ch 7: min=4.75, typ=5, max=5.25, MON_LVL=4.960(208)
+         UV_HF=4.740(197) OV_HF=5.260(223) UV_LF=4.740(197) OV_LF=5.260(223)[0m
+[0;32m  >>> Ch 7: OK: 4.960 is within range [4.75, 5.25][0m
+  >>> Ch 7: UV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m
+  >>> Ch 7: OV interrupt state: Before(lo), During(lo), After(lo): [1;31mFAIL,[0m[1;32mPass,[0m[1;31mFAIL[0m

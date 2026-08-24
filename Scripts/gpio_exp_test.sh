@@ -56,11 +56,11 @@ function gpio_check_dev()
     inval1=$(($din1&~$conf1))     # Masking the input value with the configuration value to ignore input pins
 
     echo -n "  Port0: DIN=$din0, DOUT=$dout0, POL=$pol0, CONF=$conf0"
-    test "$inval0" -eq "$outval0" && echo -e "  ${C_GREEN_B}OK (${inval0}==${outval0})${C_NONE}" \
-                                  || echo -e "  ${C_RED_B}FAIL (${inval0}!=${outval0})${C_NONE}"
+    test "$inval0" -eq "$outval0" && printf "  ${C_GREEN_B}OK (0x%.2X==0x%.2X)${C_NONE}\n" $inval0 $outval0 \
+                                  || printf "  ${C_RED_B}FAIL (0x%.2X!=0x%.2X)${C_NONE}\n" $inval0 $outval0
     echo -n "  Port1: DIN=$din1, DOUT=$dout1, POL=$pol1, CONF=$conf1"
-    test "$inval1" -eq "$outval1" && echo -e "  ${C_GREEN_B}OK (${inval1}==${outval1})${C_NONE}" \
-                                  || echo -e "  ${C_RED_B}FAIL (${inval1}!=${outval1})${C_NONE}"
+    test "$inval1" -eq "$outval1" && printf "  ${C_GREEN_B}OK (0x%.2X==0x%.2X)${C_NONE}\n" $inval1 $outval1 \
+                                  || printf "  ${C_RED_B}FAIL (0x%.2X!=0x%.2X)${C_NONE}\n" $inval1 $outval1
 }
 
 ########################################################################################

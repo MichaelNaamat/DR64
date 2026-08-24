@@ -1,0 +1,60 @@
+[1;33m
+****************************************************
+* Testing Temp Sens U60: Addr 0x48 on i2c bus 0x04
+****************************************************
+[0mCurrent: Temp=0xc01b, T-Low=0x004b, T-High=0x0050
+Pre-test Int state: hi
+T-High Int state(lo): [1;32mPass[0m
+Current: Temp=0xc01b, T-Low=0x004b, T-High=0x0005
+T-Low Int state(hi): [1;31m*** FAIL[0m
+Restoring Org T-Low: 0x004b T-High: 0x0050
+Current: Temp=0xc01b, T-Low=0x004b, T-High=0x0050
+Post-test Int state: hi
+[1;33m
+****************************************************
+* Testing Temp Sens U61: Addr 0x4C on i2c bus 0x04
+****************************************************
+[0mCurrent: Temp=0x601e, T-Low=0x004b, T-High=0x0050
+Pre-test Int state: hi
+T-High Int state(lo): [1;32mPass[0m
+Current: Temp=0x601e, T-Low=0x004b, T-High=0x0005
+T-Low Int state(lo): [1;32mPass[0m
+Restoring Org T-Low: 0x004b T-High: 0x0050
+Current: Temp=0x601e, T-Low=0x004b, T-High=0x0050
+Post-test Int state: hi
+[1;33m
+****************************************************
+* Testing Temp Sens U62: Addr 0x49 on i2c bus 0x04
+****************************************************
+[0mCurrent: Temp=0xa021, T-Low=0x004b, T-High=0x0050
+Pre-test Int state: hi
+T-High Int state(lo): [1;32mPass[0m
+Current: Temp=0xa021, T-Low=0x004b, T-High=0x0005
+T-Low Int state(hi): [1;31m*** FAIL[0m
+Restoring Org T-Low: 0x004b T-High: 0x0050
+Current: Temp=0x9021, T-Low=0x004b, T-High=0x0050
+Post-test Int state: hi
+[1;33m
+****************************************************
+* Testing Temp Sens U64: Addr 0x4A on i2c bus 0x04
+****************************************************
+[0mCurrent: Temp=0x2023, T-Low=0x004b, T-High=0x0050
+Pre-test Int state: hi
+T-High Int state(lo): [1;32mPass[0m
+Current: Temp=0x2023, T-Low=0x004b, T-High=0x0005
+T-Low Int state(lo): [1;32mPass[0m
+Restoring Org T-Low: 0x004b T-High: 0x0050
+Current: Temp=0x2023, T-Low=0x004b, T-High=0x0050
+Post-test Int state: hi
+[1;33m
+****************************************************
+* Testing Temp Sens U127: Addr 0x49 on i2c bus 0x00
+****************************************************
+[0mCurrent: Temp=0x9022, T-Low=0x004b, T-High=0x0050
+Pre-test Int state: hi
+T-High Int state(lo): [1;32mPass[0m
+Current: Temp=0x9022, T-Low=0x004b, T-High=0x0005
+T-Low Int state(hi): [1;31m*** FAIL[0m
+Restoring Org T-Low: 0x004b T-High: 0x0050
+Current: Temp=0x9022, T-Low=0x004b, T-High=0x0050
+Post-test Int state: hi
