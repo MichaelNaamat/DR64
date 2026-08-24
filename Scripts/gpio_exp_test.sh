@@ -27,7 +27,10 @@ gpio_chip=(gpio_chip_U103 gpio_chip_U104 gpio_chip_U146)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function gpio_check_dev()
 {
-    local bus dev din0 din1 dout0 dout1 pol0 pol1 conf0 conf1
+    local bus dev 
+    local din0 dout0 pol0 conf0 inval0 outval0
+    local din1 dout1 pol1 conf1 inval1 outval1
+    
     declare -n chip_info="$1"
 
     bus=${chip_info[bus]}
@@ -47,8 +50,17 @@ function gpio_check_dev()
     conf0=$(i2cget -y -f $bus $dev $REG_GPIO_CONF0)
     conf1=$(i2cget -y -f $bus $dev $REG_GPIO_CONF1)
 
-    echo "  DIN0=$din0, DIN1=$din1, DOUT0=$dout0, DOUT1=$dout1"
-    echo "  POL0=$pol0, POL1=$pol1, CONF0=$conf0, CONF1=$conf1"
+    outval0=$(($dout0&~$conf0))   # Masking the output value with the configuration value to ignore input pins
+    inval0=$(($din0&~$conf0))     # Masking the input value with the configuration value to ignore input pins
+    outval1=$(($dout1&~$conf1))   # Masking the output value with the configuration value to ignore input pins
+    inval1=$(($din1&~$conf1))     # Masking the input value with the configuration value to ignore input pins
+
+    echo -n "  Port0: DIN=$din0, DOUT=$dout0, POL=$pol0, CONF=$conf0"
+    test "$inval0" -eq "$outval0" && echo -e "  ${C_GREEN_B}OK (${inval0}==${outval0})${C_NONE}" \
+                                  || echo -e "  ${C_RED_B}FAIL (${inval0}!=${outval0})${C_NONE}"
+    echo -n "  Port1: DIN=$din1, DOUT=$dout1, POL=$pol1, CONF=$conf1"
+    test "$inval1" -eq "$outval1" && echo -e "  ${C_GREEN_B}OK (${inval1}==${outval1})${C_NONE}" \
+                                  || echo -e "  ${C_RED_B}FAIL (${inval1}!=${outval1})${C_NONE}"
 }
 
 ########################################################################################
