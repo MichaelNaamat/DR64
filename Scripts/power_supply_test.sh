@@ -16,11 +16,11 @@ declare -A ps_chip_A_U18=(  name "A_U18"  bus "0x01" dev "0x43" )
 declare -A ps_chip_A_U100=( name "A_U100" bus "0x01" dev "0x46" )
 declare -A ps_chip_U32=(    name "U32"    bus "0x02" dev "0x30" )
 declare -A ps_chip_B_U26=(  name "B_U26"  bus "0x02" dev "0x40" )
-declare -A ps_chip_B_U18=(  name "B_U18"  bus "0x02" dev "0x43" )
+## declare -A ps_chip_B_U18=(  name "B_U18"  bus "0x02" dev "0x43" )
 declare -A ps_chip_U34=(    name "U34"    bus "0x02" dev "0x43" )
 declare -A ps_chip_B_U100=( name "B_U100" bus "0x02" dev "0x46" )
 
-ps_chip=(ps_chip_U33 ps_chip_A_U26 ps_chip_A_U18 ps_chip_A_U100 ps_chip_U32 ps_chip_B_U26 ps_chip_B_U18 ps_chip_U34 ps_chip_B_U100)
+ps_chip=(ps_chip_U33 ps_chip_A_U26 ps_chip_A_U18 ps_chip_A_U100 ps_chip_U32 ps_chip_B_U26 ps_chip_U34 ps_chip_B_U100)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Do test on Power Supply device
@@ -35,7 +35,7 @@ function ps_check_dev()
 
     bus="${chip_info[bus]}"
     dev="${chip_info[dev]}"
-    
+
     echo -e "${C_YELLOW_B}"
     echo "*******************************************************"
     echo "* Testing Power Supply ${chip_info[name]}: Addr $dev on i2c bus $bus"
