@@ -88,6 +88,25 @@ vmon_chip=(vmon_chip_U93 vmon_chip_U94 vmon_chip_U95 vmon_chip_U114) # vmon_chip
 declare -r CL_PAR1=$1
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Get value (0/1) of a GPIO pin
+# Parameters:
+# $1 - GPIO pin identifier
+# Return: 0 or 1
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function vmon_get_pin()
+{
+    local cmd_out
+
+    cmd_out=$(wget -qO- --method=POST \
+                   --header='accept: application/json' \
+                   --header='Content-Type: application/json' \
+                   --body-data='{"log_level": "INFO", "gpios": ["'"$1"'"]}' \
+                   "http://10.0.0.102:8000/controller/gpio/read_values/"))
+
+    return ${cmd_out:129:1}
+}
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test values of voltage monitor registers for a given device
 # Parameters:
 # $1 - Bus number
@@ -165,39 +184,33 @@ function vmon_check_channel()
     fi
 
     # ---------------------->>> Check UV interrupt <<<---------------------
-    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state before test
-    int_stat1="${int_stat1:58:2}"
+    int_stat1=$(vmon_get_pin "PK_08")
 
     i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $ov_hf             # Set UV_HF to value of OV to trigger UV interrupt
-    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state during test
-    int_stat2="${int_stat2:58:2}"
+    int_stat2=$(vmon_get_pin "PK_08")     # Read int (pk_07 GPIO) state during test
 
     i2cset -y -f $bus $dev ${REG_UV_HF[$ch]} $uv_hf             # Restore original UV_HF value
-    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO)
-    int_stat3="${int_stat3:58:2}"
+    int_stat3=$(vmon_get_pin "PK_08")     # Read int (pk_07 GPIO)
 
     echo -n "  >>> Ch ${ch}: UV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
-    test "$int_stat1" = "lo" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
-    test "$int_stat2" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}"   || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
-    test "$int_stat3" = "lo" && echo -e -n "${C_RED_B}FAIL${C_NONE}"  || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat1" = "0" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat2" = "1" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat3" = "0" && echo -e -n "${C_RED_B}FAIL${C_NONE}"  || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
     echo
 
     # ---------------------->>> Check OV interrupt <<<---------------------
-    int_stat1=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state before test
-    int_stat1="${int_stat1:58:2}"
+    int_stat1=$(vmon_get_pin "PK_08")     # Read int (pk_07 GPIO) state before test
 
     i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $uv_hf             # Set OV_HF to value of UV to trigger OV interrupt
-    int_stat2=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO) state during test
-    int_stat2="${int_stat2:58:2}"
+    int_stat2=$(vmon_get_pin "PK_08")     # Read int (pk_07 GPIO) state during test
 
     i2cset -y -f $bus $dev ${REG_OV_HF[$ch]} $ov_hf             # Restore original OV_HF value
-    int_stat3=$(cat  /sys/kernel/debug/gpio | grep "PK_08")     # Read int (pk_07 GPIO)
-    int_stat3="${int_stat3:58:2}"
+    int_stat3=$(vmon_get_pin "PK_08")     # Read int (pk_07 GPIO)
 
     echo -n "  >>> Ch ${ch}: OV interrupt state: Before(${int_stat1}), During(${int_stat2}), After(${int_stat3}): "
-    test "$int_stat1" = "lo" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
-    test "$int_stat2" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}"   || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
-    test "$int_stat3" = "lo" && echo -e -n "${C_RED_B}FAIL${C_NONE}" || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
+    test "$int_stat1" = "0" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat2" = "1" && echo -e -n "${C_RED_B}FAIL,${C_NONE}" || echo -e -n "${C_GREEN_B}Pass,${C_NONE}"
+    test "$int_stat3" = "0" && echo -e -n "${C_RED_B}FAIL${C_NONE}"  || echo -e -n "${C_GREEN_B}Pass${C_NONE}"
     echo
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
