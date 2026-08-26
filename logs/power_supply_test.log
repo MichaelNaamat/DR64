@@ -1,0 +1,40 @@
+[1;33m
+*******************************************************
+* Testing Power Supply U33: Addr 0x33 on i2c bus 0x01
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0xfa, Control1=0x2a, Control2=0x0d, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply A_U26: Addr 0x40 on i2c bus 0x01
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x14, Control1=0x2a, Control2=0x09, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply A_U18: Addr 0x43 on i2c bus 0x01
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x82, Control1=0x2a, Control2=0x09, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply A_U100: Addr 0x46 on i2c bus 0x01
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x5f, Control1=0x28, Control2=0x0a, Control3=0x04, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply U32: Addr 0x30 on i2c bus 0x02
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x64, Control1=0x2a, Control2=0x0d, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply B_U26: Addr 0x40 on i2c bus 0x02
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x14, Control1=0x2a, Control2=0x09, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply U34: Addr 0x43 on i2c bus 0x02
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x50, Control1=0x2a, Control2=0x09, Control3=0x00, Status=0x00[0m
+[1;33m
+*******************************************************
+* Testing Power Supply B_U100: Addr 0x46 on i2c bus 0x02
+*******************************************************
+[0m[1;34m  >>> DEBUG: VSET=0x5f, Control1=0x28, Control2=0x0a, Control3=0x04, Status=0x00[0m
