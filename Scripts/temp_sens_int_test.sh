@@ -11,31 +11,12 @@ declare -r REG_OS="0x04"
 
 # ----->>> Define Temp-sensor chips
 declare -A temp_chip_U60=(  name "U60"   bus "0x04" dev "0x48" )
-declare -A temp_chip_U61=(  name "U61"  bus "0x04" dev "0x4C" )
-declare -A temp_chip_U62=(  name "U62"  bus "0x04" dev "0x49" )
-declare -A temp_chip_U64=(  name "U64"  bus "0x04" dev "0x4A" )
+declare -A temp_chip_U61=(  name "U61"   bus "0x04" dev "0x4C" )
+declare -A temp_chip_U62=(  name "U62"   bus "0x04" dev "0x49" )
+declare -A temp_chip_U64=(  name "U64"   bus "0x04" dev "0x4A" )
 declare -A temp_chip_U127=( name "U127"  bus "0x00" dev "0x49" )
 
 temp_chip=(temp_chip_U60 temp_chip_U61 temp_chip_U62 temp_chip_U64 temp_chip_U127)
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Print values of Temp, T-Low, T-High registers for a given device
-# Parameters:
-# $1 - Bus number
-# $2 - Device number
-# Return: None
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-function read_temp_reg()
-{
-    local bus dev cur_temp t_low t_high 
-    bus=$1
-    dev=$2
-
-    cur_temp=$(i2cget -y -f $bus $dev $REG_TEMP w)
-    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
-    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
-    echo "Current: Temp=$cur_temp, T-Low=$t_low, T-High=$t_high"
-}
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test interrupt line for temp75b-q1 tempratur sensor 
@@ -60,40 +41,44 @@ function temp75b_check_int()
     org_t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
 	
     echo -e "${C_YELLOW_B}"
-    echo "****************************************************"
-    echo "* Testing Temp Sens ${chip_info[name]}: Addr $dev on i2c bus $bus"
-    echo "****************************************************"
+    echo   "****************************************************"
+    echo   "* Testing Temp Sens ${chip_info[name]}: Addr $dev on i2c bus $bus"
+    printf "* T-Low=%uc, T-High=%uc\n" "$org_t_low" "$org_t_high"
+    echo   "****************************************************"
     echo -e -n "${C_NONE}"
     sleep 0.1
 	
-    # --->>> Set Configuration Reg (0x01).:
+    # --->>> Set Configuration Reg (0x01):
     # OS (15)    = '0'
     # CR (13-14) = '00'  | 37Hz conversion rate (typ) (default)
     # FQ (11-12) = '00'  | 1 fault (default)
     # POL (10)   = '0'   | ALERT is active low (default)
-    # TM  (9)    = '1'   | ALERT is in interrupt mode
+    # TM  (9)    = '0'   | ALERT is in comperator mode (default)
     # SD  (8)    = '0'   | Device is in continuous conversion mode (default)
-    # Mask: 0000 0010 = 0x02
-    i2cset -y -f $bus $dev $REG_CR 0x02
+    # Mask: 0000 0000 = 0x00
+    i2cset -y -f $bus $dev $REG_CR 0x00
          
-    # ============ T-High test: Set T-High to +5c (T-Low stay -40c)
+    # ============ T-High test: Set T-High to +5c, T-Low to +2
     # --->>> Save int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
     int_before=${gpio_line:58:2}
 
     i2cset -y -f $bus $dev $REG_THIGH +5 w    # Set T-High to +5c
+    i2cset -y -f $bus $dev $REG_TLOW +2 w    # Set T-Low to +2c
 
     # --->>> Save int state
     gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
     int_during=${gpio_line:58:2}
 
+    # --->>> Read T-Low/T-High values & clear interrupt
+    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
+    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
+
     # --->>> Restor normal values 
     i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
     i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
 
-    # --->>> Read T-Low/T-High values & clear interrupt
-    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
-    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
+    # --->>> Read current temperature
     cur_temp=$(i2cget -y -f $bus $dev $REG_TEMP w)
     cur_temp=$(($cur_temp&0xFF))   # Take only the integer degrees
  
@@ -102,42 +87,10 @@ function temp75b_check_int()
     int_after=${gpio_line:58:2}
     
     # ---->>> Print results of interrupt test
-    printf "  T-High test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
+    printf "  T-High/T-Low test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
     test "$int_before" = "hi" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
     test "$int_during" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
     test "$int_after" = "hi" && echo -e "${C_GREEN_B}Pass,${C_NONE}" || echo -e "${C_RED_B}FAIL,${C_NONE}"
-
-    # --->>> Save int state
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    int_before=${gpio_line:58:2}
-    
-    # ============ T-Low test: Set T-Low to +60c & T-High to +65c)
-    i2cset -y -f $bus $dev $REG_TLOW +60 w
-    i2cset -y -f $bus $dev $REG_THIGH +65 w
-
-    # --->>> Save int state
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    int_during=${gpio_line:58:2}
-
-    # --->>> Restor normal values 
-    i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
-    i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
-
-    # --->>> Read to clear int
-    t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
-    t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
-    cur_temp=$(i2cget -y -f $bus $dev $REG_TEMP w)
-    cur_temp=$(($cur_temp&0xFF))   # Take only the integer degrees
-
-    # --->>> Save int state
-    gpio_line=$(cat  /sys/kernel/debug/gpio | grep "PC_04")
-    int_after=${gpio_line:58:2}
-
-    # ---->>> Print results of interrupt test
-    printf "  T-Low  test: Temp=%uc, T-Low=%uc, T-High=%uc, Before($int_before), During($int_during), After($int_after) - " "$cur_temp" "$t_low" "$t_high"
-    test "$int_before" = "hi" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
-    test "$int_during" = "lo" && echo -e -n "${C_GREEN_B}Pass,${C_NONE}" || echo -e -n "${C_RED_B}FAIL,${C_NONE}"
-    test "$int_after"  = "hi" && echo -e    "${C_GREEN_B}Pass,${C_NONE}" || echo -e     "${C_RED_B}FAIL,${C_NONE}"
 }
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Test interrupt line for temp75c-q1 tempratur sensor 
