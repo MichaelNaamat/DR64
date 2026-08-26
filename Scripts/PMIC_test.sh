@@ -3,7 +3,7 @@
 source ./script_defs.sh     # Include general definitions for all tests (colors, etc.)
 
 # --->>> Register addresses for GPIO-expansion chips
-declare -r REG_PMIC_DEVICEID "0x2B"        # Device ID
+declare -r REG_PMIC_DEVICEID="0x2B"        # Device ID
 
 # ----->>> Define PMIC chips
 declare -A pmic_chip_U54_A=( name "U54"  bus "0x04" dev "0x20" )

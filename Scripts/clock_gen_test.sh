@@ -3,8 +3,8 @@
 source ./script_defs.sh     # Include general definitions for all tests (colors, etc.)
 
 # --->>> Register addresses for GPIO-expansion chips
-declare -r REG_CLK_DEVICE_PN_BASE "0x0D"        # Device PN
-declare -r REG_CLK_DEVICE_REV     "0x0E"        # Device Revision
+declare -r REG_CLK_DEVICE_PN_BASE="0x0D"        # Device PN
+declare -r REG_CLK_DEVICE_REV="0x0E"            # Device Revision
 
 # ----->>> Define Clock-Gen chips
 declare -A clock_gen_chip_U87=( name "U87"  bus "0x01" dev "0x6A" )
