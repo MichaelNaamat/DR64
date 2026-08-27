@@ -5,7 +5,6 @@ import subprocess
 import sys
 import urllib.request
 
-
 C_RED = "\033[0;31m"
 C_GREEN = "\033[0;32m"
 C_YELLOW = "\033[0;33m"
@@ -32,10 +31,8 @@ REG_OV_HF = ["0x21", "0x31", "0x41", "0x51", "0x61", "0x71", "0x81", "0x91"]
 REG_UV_LF = ["0x22", "0x32", "0x42", "0x52", "0x62", "0x72", "0x82", "0x92"]
 REG_OV_LF = ["0x23", "0x33", "0x43", "0x53", "0x63", "0x73", "0x83", "0x93"]
 
-
 def channel(name, min_val, typ_val, max_val):
     return {"name": name, "min": min_val, "typ": typ_val, "max": max_val}
-
 
 U93_CHANNELS = [
     channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
@@ -99,21 +96,34 @@ VMON_CHIPS = [
     {"name": "U114", "bus": "0x00", "dev": "0x34", "channels": U114_CHANNELS},
 ]
 
+# --->>> Global flags
+global debug_mode
+debug_mode = False
+global sim_mode
+sim_mode = False
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def run_command(args):
+    global sim_mode
+    if sim_mode:
+        return "0xAA"  # Simulated response
     completed = subprocess.run(args, capture_output=True, text=True, check=True)
     return completed.stdout.strip()
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def i2cget(bus, dev, reg):
     return run_command(["i2cget", "-y", "-f", bus, dev, reg])
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def i2cset(bus, dev, reg, value):
     run_command(["i2cset", "-y", "-f", bus, dev, reg, value])
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def vmon_get_pin(pin):
+    global sim_mode
+    if sim_mode:
+        return "0"  # Simulated response
+
     payload = json.dumps({"log_level": "INFO", "gpios": [pin]}).encode("utf-8")
     request = urllib.request.Request(
         "http://10.0.0.102:8000/controller/gpio/read_values/",
@@ -138,14 +148,25 @@ def vmon_get_pin(pin):
     return body.strip()
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def read_hex_int(bus, dev, reg):
     return int(i2cget(bus, dev, reg), 0)
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def format_voltage(raw_value, coef, mul):
     return f"{coef + raw_value * mul:.3f}"
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Print the result of an interrupt test
+# Parameters:
+# label - Name of the interrupt
+# before_state - State before the test
+# during_state - State during the test
+# after_state - State after the test
+# Return: None
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def print_interrupt_result(label, before_state, during_state, after_state):
     print(
         f"  >>> {label} interrupt state: Before({before_state}), During({during_state}), After({after_state}): ",
@@ -163,7 +184,8 @@ def print_interrupt_result(label, before_state, during_state, after_state):
         f"{C_RED_B}FAIL{C_NONE}" if after_state == "0" else f"{C_GREEN_B}Pass{C_NONE}"
     )
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def vmon_check_channel(bus, dev, ch, ch_info, coef, mul, debug_mode):
     min_val = ch_info["min"]
     typ_val = ch_info["typ"]
@@ -223,8 +245,9 @@ def vmon_check_channel(bus, dev, ch, ch_info, coef, mul, debug_mode):
 
     print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)
 
-
-def vmon_check_dev(chip_info, debug_mode):
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+def vmon_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
     chlist = chip_info["channels"]
@@ -259,14 +282,24 @@ def vmon_check_dev(chip_info, debug_mode):
         ch_ind += 1
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Main entry point for the script
+# Parameters:
+# argv - Command line arguments
+# Return: Exit code
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main(argv):
+    global debug_mode
+    global sim_mode
     debug_mode = len(argv) > 1 and argv[1] == "debug"
+    sim_mode = len(argv) > 1 and argv[1] == "sim"
 
     for chip in VMON_CHIPS:
-        vmon_check_dev(chip, debug_mode)
+        vmon_check_dev(chip)
 
     return 0
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv))
