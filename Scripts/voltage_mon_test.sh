@@ -95,15 +95,16 @@ declare -r CL_PAR1=$1
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 function vmon_get_pin()
 {
-    local cmd_out
+    local cmd_out pin_state
 
     cmd_out=$(wget -qO- --method=POST \
                    --header='accept: application/json' \
                    --header='Content-Type: application/json' \
                    --body-data='{"log_level": "INFO", "gpios": ["'"$1"'"]}' \
-                   "http://10.0.0.102:8000/controller/gpio/read_values/"))
+                   "http://10.0.0.102:8000/controller/gpio/read_values/")
 
-    return ${cmd_out:129:1}
+    pin_state=${cmd_out:129:1}
+    echo -e "$pin_state"
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
