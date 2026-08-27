@@ -4,11 +4,7 @@ import re
 import subprocess
 import sys
 import time
-
-C_YELLOW_B = "\033[1;33m"
-C_GREEN_B = "\033[1;32m"
-C_RED_B = "\033[1;31m"
-C_NONE = "\033[0m"
+import script_defs as defs
 
 REG_TEMP = "0x00"
 REG_CR = "0x01"
@@ -67,12 +63,12 @@ def temp75b_check_int(chip_info):
     org_t_low = i2cget(bus, dev, REG_TLOW, "w")
     org_t_high = i2cget(bus, dev, REG_THIGH, "w")
 
-    print(f"{C_YELLOW_B}")
+    print(f"{defs.C_YELLOW_B}")
     print("****************************************************")
     print(f"* Testing Temp Sens {chip_info['name']}: Addr {dev} on i2c bus {bus}")
     print(f"* T-Low={org_t_low}c, T-High={org_t_high}c")
     print("****************************************************")
-    print(f"{C_NONE}", end="")
+    print(f"{defs.C_NONE}", end="")
     time.sleep(0.1)
 
     i2cset(bus, dev, REG_CR, "0x00")
@@ -105,33 +101,31 @@ def temp75b_check_int(chip_info):
     ok_after = int_after == "hi"
 
     if ok_before:
-        print(f"{C_GREEN_B}Pass,{C_NONE}", end="")
+        print(f"{defs.C_GREEN_B}Pass,{defs.C_NONE}", end="")
     else:
-        print(f"{C_RED_B}FAIL,{C_NONE}", end="")
+        print(f"{defs.C_RED_B}FAIL,{defs.C_NONE}", end="")
 
     if ok_during:
-        print(f"{C_GREEN_B}Pass,{C_NONE}", end="")
+        print(f"{defs.C_GREEN_B}Pass,{defs.C_NONE}", end="")
     else:
-        print(f"{C_RED_B}FAIL,{C_NONE}", end="")
+        print(f"{defs.C_RED_B}FAIL,{defs.C_NONE}", end="")
 
     if ok_after:
-        print(f"{C_GREEN_B}Pass{C_NONE}")
+        print(f"{defs.C_GREEN_B}Pass{defs.C_NONE}")
     else:
-        print(f"{C_RED_B}FAIL{C_NONE}")
+        print(f"{defs.C_RED_B}FAIL{defs.C_NONE}")
 
 
     # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
-    global debug_mode
-    global sim_mode
-    debug_mode = False
-    sim_mode = False
+    defs.debug_mode = False
+    defs.sim_mode = False
     
     for arg in sys.argv[1:]:
         if arg == "debug":
-            debug_mode = True
+            defs.debug_mode = True
         elif arg == "sim":
-            sim_mode = True
+            defs.sim_mode = True
 
     for chip in TEMP_CHIPS:
         temp75b_check_int(chip)

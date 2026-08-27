@@ -5,16 +5,7 @@ import subprocess
 import sys
 import urllib.request
 
-C_RED = "\033[0;31m"
-C_GREEN = "\033[0;32m"
-C_YELLOW = "\033[0;33m"
-C_BLUE = "\033[0;34m"
-C_RED_B = "\033[1;31m"
-C_GREEN_B = "\033[1;32m"
-C_YELLOW_B = "\033[1;33m"
-C_BLUE_B = "\033[1;34m"
-C_NONE = "\033[0m"
-
+import script_defs as defs
 
 REG_BANK_SEL = "0xF0"
 REG_VMON_LVL = ["0x40", "0x41", "0x42", "0x43", "0x44", "0x45", "0x46", "0x47"]
@@ -98,8 +89,7 @@ VMON_CHIPS = [
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def run_command(args):
-    global sim_mode
-    if sim_mode:
+    if defs.sim_mode:
         return "0xAA"  # Simulated response
     completed = subprocess.run(args, capture_output=True, text=True, check=True)
     return completed.stdout.strip()
@@ -114,8 +104,7 @@ def i2cset(bus, dev, reg, value):
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def vmon_get_pin(pin):
-    global sim_mode
-    if sim_mode:
+    if defs.sim_mode:
         return "0"  # Simulated response
 
     payload = json.dumps({"log_level": "INFO", "gpios": [pin]}).encode("utf-8")
@@ -167,15 +156,15 @@ def print_interrupt_result(label, before_state, during_state, after_state):
         end="",
     )
     print(
-        f"{C_RED_B}FAIL,{C_NONE}" if before_state == "0" else f"{C_GREEN_B}Pass,{C_NONE}",
+        f"{defs.C_RED_B}FAIL,{defs.C_NONE}" if before_state == "0" else f"{defs.C_GREEN_B}Pass,{defs.C_NONE}",
         end="",
     )
     print(
-        f"{C_RED_B}FAIL,{C_NONE}" if during_state == "1" else f"{C_GREEN_B}Pass,{C_NONE}",
+        f"{defs.C_RED_B}FAIL,{defs.C_NONE}" if during_state == "1" else f"{defs.C_GREEN_B}Pass,{defs.C_NONE}",
         end="",
     )
     print(
-        f"{C_RED_B}FAIL{C_NONE}" if after_state == "0" else f"{C_GREEN_B}Pass{C_NONE}"
+        f"{defs.C_RED_B}FAIL{defs.C_NONE}" if after_state == "0" else f"{defs.C_GREEN_B}Pass{defs.C_NONE}"
     )
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -195,7 +184,7 @@ def vmon_check_channel(bus, dev, ch, ch_info, coef, mul, debug_mode):
     ov_lf = read_hex_int(bus, dev, REG_OV_LF[ch])
 
     if mon_lvl <= 0 or mon_lvl > 255:
-        print(f"{C_RED_B}  >>> ERROR: Invalid monitor level ({mon_lvl}) for channel {ch}{C_NONE}")
+        print(f"{defs.C_RED_B}  >>> ERROR: Invalid monitor level ({mon_lvl}) for channel {ch}{defs.C_NONE}")
         return
 
     if debug_mode:
@@ -206,18 +195,18 @@ def vmon_check_channel(bus, dev, ch, ch_info, coef, mul, debug_mode):
         ov_lf_v = format_voltage(ov_lf, coef, mul)
 
         print(
-            f"{C_BLUE_B}  >>> DEBUG: Ch {ch}: min={min_val}, typ={typ_val}, max={max_val}, MON_LVL={mon_lvl_v}({mon_lvl})"
+            f"{defs.C_BLUE_B}  >>> DEBUG: Ch {ch}: min={min_val}, typ={typ_val}, max={max_val}, MON_LVL={mon_lvl_v}({mon_lvl})"
         )
         print(
-            f"                             UV_HF={uv_hf_v}({uv_hf}) OV_HF={ov_hf_v}({ov_hf}) UV_LF={uv_lf_v}({uv_lf}) OV_LF={ov_lf_v}({ov_lf}){C_NONE}"
+            f"                             UV_HF={uv_hf_v}({uv_hf}) OV_HF={ov_hf_v}({ov_hf}) UV_LF={uv_lf_v}({uv_lf}) OV_LF={ov_lf_v}({ov_lf}){defs.C_NONE}"
         )
 
         if float(mon_lvl_v) < min_val:
-            print(f"{C_RED}  >>> Ch {ch}: ERROR: Less than min ({mon_lvl_v} < {min_val}){C_NONE}")
+            print(f"{defs.C_RED}  >>> Ch {ch}: ERROR: Less than min ({mon_lvl_v} < {min_val}){defs.C_NONE}")
         elif float(mon_lvl_v) > max_val:
-            print(f"{C_RED}  >>> Ch {ch}: ERROR: More than max ({mon_lvl_v} > {max_val}){C_NONE}")
+            print(f"{defs.C_RED}  >>> Ch {ch}: ERROR: More than max ({mon_lvl_v} > {max_val}){defs.C_NONE}")
         else:
-            print(f"{C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{C_NONE}")
+            print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
 
     int_stat1 = vmon_get_pin("PK_08")
 
@@ -240,7 +229,6 @@ def vmon_check_channel(bus, dev, ch, ch_info, coef, mul, debug_mode):
     print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def vmon_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
@@ -249,10 +237,10 @@ def vmon_check_dev(chip_info):
     i2cset(bus, dev, REG_BANK_SEL, "0x01")
     vrange_mult = read_hex_int(bus, dev, REG_VRANGE_MULT)
 
-    print(C_YELLOW)
+    print(defs.C_YELLOW)
     print("****************************************************")
     print(f"* Testing {chip_info['name']}: Addr {dev} on i2c bus {bus} *")
-    if debug_mode:
+    if defs.debug_mode:
         ien_uvhf = i2cget(bus, dev, REG_IEN_UVHF)
         ien_uvlf = i2cget(bus, dev, REG_IEN_UVLF)
         ien_ovhf = i2cget(bus, dev, REG_IEN_OVHF)
@@ -261,7 +249,7 @@ def vmon_check_dev(chip_info):
         print(
             f"* Int enable: UVHF={ien_uvhf}, UVLF={ien_uvlf}, OVHF={ien_ovhf}, OVLF={ien_ovlf}, MON_CH_EN={mon_ch_en} *"
         )
-    print(f"****************************************************{C_NONE}")
+    print(f"****************************************************{defs.C_NONE}")
 
     ch_ind = 0
     for ch_info in chlist:
@@ -269,9 +257,9 @@ def vmon_check_dev(chip_info):
             continue
 
         if vrange_mult & (1 << ch_ind):
-            vmon_check_channel(bus, dev, ch_ind, ch_info, 0.8, 0.020, debug_mode)
+            vmon_check_channel(bus, dev, ch_ind, ch_info, 0.8, 0.020, defs.debug_mode)
         else:
-            vmon_check_channel(bus, dev, ch_ind, ch_info, 0.2, 0.005, debug_mode)
+            vmon_check_channel(bus, dev, ch_ind, ch_info, 0.2, 0.005, defs.debug_mode)
 
         ch_ind += 1
 
@@ -283,16 +271,14 @@ def vmon_check_dev(chip_info):
 # Return: Exit code
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main(argv):
-    global debug_mode
-    global sim_mode
-    debug_mode = False
-    sim_mode = False
+    defs.debug_mode = False
+    defs.sim_mode = False
     
     for arg in argv[1:]:
         if arg == "debug":
-            debug_mode = True
+            defs.debug_mode = True
         elif arg == "sim":
-            sim_mode = True
+            defs.sim_mode = True
 
     for chip in VMON_CHIPS:
         vmon_check_dev(chip)

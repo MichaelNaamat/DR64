@@ -2,16 +2,7 @@
 
 import subprocess
 import sys
-
-C_RED = "\033[0;31m"
-C_GREEN = "\033[0;32m"
-C_YELLOW = "\033[0;33m"
-C_BLUE = "\033[0;34m"
-C_RED_B = "\033[1;31m"
-C_GREEN_B = "\033[1;32m"
-C_YELLOW_B = "\033[1;33m"
-C_BLUE_B = "\033[1;34m"
-C_NONE = "\033[0m"
+import script_defs as defs
 
 REG_GPIO_DIN0 = "0x00"
 REG_GPIO_DIN1 = "0x01"
@@ -30,7 +21,7 @@ GPIO_CHIPS = [
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def run_i2cget(bus, dev, reg):
-    if sim_mode:
+    if defs.sim_mode:
         return 0x00
     completed = subprocess.run(["i2cget", "-y", "-f", bus, dev, reg], capture_output=True, text=True, check=True)
     return int(completed.stdout.strip(), 16)
@@ -40,11 +31,11 @@ def gpio_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
 
-    print(f"{C_YELLOW_B}")
+    print(f"{defs.C_YELLOW_B}")
     print("*******************************************************")
     print(f"* Testing GPIO {chip_info['name']}: Addr {dev} on i2c bus {bus}")
     print("*******************************************************")
-    print(f"{C_NONE}", end="")
+    print(f"{defs.C_NONE}", end="")
 
     din0 = run_i2cget(bus, dev, REG_GPIO_DIN0)
     din1 = run_i2cget(bus, dev, REG_GPIO_DIN1)
@@ -67,28 +58,26 @@ def gpio_check_dev(chip_info):
 
     print(f"  Port0: DIN=0x{din0:02X}, DOUT=0x{dout0:02X}, POL=0x{pol0:02X}, CONF=0x{conf0:02X}", end="")
     if inval0 == outval0:
-        print(f"  {C_GREEN_B}OK (0x{inval0:02X}==0x{outval0:02X}){C_NONE}")
+        print(f"  {defs.C_GREEN_B}OK (0x{inval0:02X}==0x{outval0:02X}){defs.C_NONE}")
     else:
-        print(f"  {C_RED_B}FAIL (0x{inval0:02X}!=0x{outval0:02X}){C_NONE}")
+        print(f"  {defs.C_RED_B}FAIL (0x{inval0:02X}!=0x{outval0:02X}){defs.C_NONE}")
 
     print(f"  Port1: DIN=0x{din1:02X}, DOUT=0x{dout1:02X}, POL=0x{pol1:02X}, CONF=0x{conf1:02X}", end="")
     if inval1 == outval1:
-        print(f"  {C_GREEN_B}OK (0x{inval1:02X}==0x{outval1:02X}){C_NONE}")
+        print(f"  {defs.C_GREEN_B}OK (0x{inval1:02X}==0x{outval1:02X}){defs.C_NONE}")
     else:
-        print(f"  {C_RED_B}FAIL (0x{inval1:02X}!=0x{outval1:02X}){C_NONE}")
+        print(f"  {defs.C_RED_B}FAIL (0x{inval1:02X}!=0x{outval1:02X}){defs.C_NONE}")
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
-    global debug_mode
-    global sim_mode
-    debug_mode = False
-    sim_mode = False
+    defs.debug_mode = False
+    defs.sim_mode = False
     
     for arg in sys.argv[1:]:
         if arg == "debug":
-            debug_mode = True
+            defs.debug_mode = True
         elif arg == "sim":
-            sim_mode = True
+            defs.sim_mode = True
 
     for chip in GPIO_CHIPS:
         gpio_check_dev(chip)

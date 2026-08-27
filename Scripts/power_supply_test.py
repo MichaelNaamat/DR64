@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
 import subprocess
-from sys import argv
-
-C_YELLOW_B = "\033[1;33m"
-C_BLUE_B = "\033[1;34m"
-C_NONE = "\033[0m"
+import sys
+import script_defs as defs
 
 REG_PS_VSET = "0x00"
 REG_PS_CONTROL1 = "0x01"
@@ -27,7 +24,7 @@ PS_CHIPS = [
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def i2cget(bus, dev, reg):
-    if sim_mode:
+    if defs.sim_mode:
         return "0x00"
     completed = subprocess.run(["i2cget", "-y", "-f", bus, dev, reg], capture_output=True, text=True, check=True)
     return completed.stdout.strip()
@@ -38,31 +35,29 @@ def ps_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
 
-    print(f"{C_YELLOW_B}")
+    print(f"{defs.C_YELLOW_B}")
     print("*******************************************************")
     print(f"* Testing Power Supply {chip_info['name']}: Addr {dev} on i2c bus {bus}")
     print("*******************************************************")
-    print(f"{C_NONE}", end="")
+    print(f"{defs.C_NONE}", end="")
 
     vset = i2cget(bus, dev, REG_PS_VSET)
     control1 = i2cget(bus, dev, REG_PS_CONTROL1)
     control2 = i2cget(bus, dev, REG_PS_CONTROL2)
     control3 = i2cget(bus, dev, REG_PS_CONTROL3)
     status = i2cget(bus, dev, REG_PS_STATUS)
-    print(f"{C_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, Control2={control2}, Control3={control3}, Status={status}{C_NONE}")
+    print(f"{defs.C_BLUE_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, Control2={control2}, Control3={control3}, Status={status}{defs.C_NONE}")
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
-    global debug_mode
-    global sim_mode
-    debug_mode = False
-    sim_mode = False
+    defs.debug_mode = False
+    defs.sim_mode = False
     
-    for arg in argv[1:]:
+    for arg in sys.argv[1:]:
         if arg == "debug":
-            debug_mode = True
+            defs.debug_mode = True
         elif arg == "sim":
-            sim_mode = True
+            defs.sim_mode = True
 
     for chip in PS_CHIPS:
         ps_check_dev(chip)
