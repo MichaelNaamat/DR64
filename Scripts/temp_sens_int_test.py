@@ -22,7 +22,7 @@ TEMP_CHIPS = [
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def i2cget(bus, dev, reg, mode=None):
-    if sim_mode:
+    if defs.sim_mode:
         return "0x00"
     args = ["i2cget", "-y", "-f", bus, dev, reg]
     if mode is not None:
@@ -32,7 +32,7 @@ def i2cget(bus, dev, reg, mode=None):
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def i2cset(bus, dev, reg, value, mode=None):
-    if sim_mode:
+    if defs.sim_mode:
         return  
     args = ["i2cset", "-y", "-f", bus, dev, reg, value]
     if mode is not None:

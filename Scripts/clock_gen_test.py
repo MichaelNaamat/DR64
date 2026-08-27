@@ -35,7 +35,7 @@ def clock_gen_check_dev(chip_info):
 
     dev_pn = i2cget(bus, dev, REG_CLK_DEVICE_PN_BASE)
     dev_rev = i2cget(bus, dev, REG_CLK_DEVICE_REV)
-    print(f"{defs.C_BLUE_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
+    print(f"{defs.C_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Main entry point

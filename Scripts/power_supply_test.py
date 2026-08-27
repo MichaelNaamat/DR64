@@ -46,7 +46,7 @@ def ps_check_dev(chip_info):
     control2 = i2cget(bus, dev, REG_PS_CONTROL2)
     control3 = i2cget(bus, dev, REG_PS_CONTROL3)
     status = i2cget(bus, dev, REG_PS_STATUS)
-    print(f"{defs.C_BLUE_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, Control2={control2}, Control3={control3}, Status={status}{defs.C_NONE}")
+    print(f"{defs.C_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, Control2={control2}, Control3={control3}, Status={status}{defs.C_NONE}")
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
