@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
+from sys import argv
 
 C_YELLOW_B = "\033[1;33m"
 C_BLUE_B = "\033[1;34m"
@@ -24,11 +25,15 @@ PS_CHIPS = [
 ]
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def i2cget(bus, dev, reg):
+    if sim_mode:
+        return "0x00"
     completed = subprocess.run(["i2cget", "-y", "-f", bus, dev, reg], capture_output=True, text=True, check=True)
     return completed.stdout.strip()
 
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def ps_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
@@ -46,12 +51,23 @@ def ps_check_dev(chip_info):
     status = i2cget(bus, dev, REG_PS_STATUS)
     print(f"{C_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, Control2={control2}, Control3={control3}, Status={status}{C_NONE}")
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
+    global debug_mode
+    global sim_mode
+    debug_mode = False
+    sim_mode = False
+    
+    for arg in argv[1:]:
+        if arg == "debug":
+            debug_mode = True
+        elif arg == "sim":
+            sim_mode = True
+
     for chip in PS_CHIPS:
         ps_check_dev(chip)
     return 0
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 if __name__ == "__main__":
     raise SystemExit(main())

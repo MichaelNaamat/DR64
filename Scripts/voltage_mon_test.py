@@ -96,12 +96,6 @@ VMON_CHIPS = [
     {"name": "U114", "bus": "0x00", "dev": "0x34", "channels": U114_CHANNELS},
 ]
 
-# --->>> Global flags
-global debug_mode
-debug_mode = False
-global sim_mode
-sim_mode = False
-
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def run_command(args):
     global sim_mode
@@ -291,8 +285,14 @@ def vmon_check_dev(chip_info):
 def main(argv):
     global debug_mode
     global sim_mode
-    debug_mode = len(argv) > 1 and argv[1] == "debug"
-    sim_mode = len(argv) > 1 and argv[1] == "sim"
+    debug_mode = False
+    sim_mode = False
+    
+    for arg in argv[1:]:
+        if arg == "debug":
+            debug_mode = True
+        elif arg == "sim":
+            sim_mode = True
 
     for chip in VMON_CHIPS:
         vmon_check_dev(chip)

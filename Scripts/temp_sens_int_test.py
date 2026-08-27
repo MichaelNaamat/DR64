@@ -1,65 +1,143 @@
+#!/usr/bin/env python3
+
+import re
 import subprocess
+import sys
+import time
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Test interrupt line for tempratur sensor 
-# Parameters:
-# $1 - Bus number
-# $2 - Device number
-# Return: None
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-def check_temp_int(bus, dev):
-    cur_temp   = 0
-    org_t_low  = 0
-    org_t_high = 0
-    cur_t_low  = 0
-    cur_t_high = 0
+C_YELLOW_B = "\033[1;33m"
+C_GREEN_B = "\033[1;32m"
+C_RED_B = "\033[1;31m"
+C_NONE = "\033[0m"
 
-    print ("*****************************************")
-    print (f"* Testing Temp Dev {dev}, on i2c bus {bus}")
-    print ("*****************************************")
+REG_TEMP = "0x00"
+REG_CR = "0x01"
+REG_TLOW = "0x02"
+REG_THIGH = "0x03"
+REG_OS = "0x04"
 
-    # --->>> Set Configuration Reg (0x01).:
-    #  - OS  =  '1': Set 'One-Shot' mode 
-    #  - FQ  = '00': Trigger ALERT adter 1 fault (defult)
-    #  - POL =  '0': ALERT active Low (default)
-    #  - TM  =  '1': ALERT in interrupt mode
-    #  - SD  =  '0': Clear 'Shutdown Mode' 
-    #  0010 0010 = 0x22
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x01", "0x22"])
-    
-    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04)
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x04", "0x00"])
-    
-    # --->>> Read current temperature from device (Addr=0x00)
-    cur_temp = subprocess.run(["i2cget", "-y", "-f", bus, dev, "0x00", "w"], capture_output=True, text=True)
-    print (f"Current Temp: {cur_temp.stdout.strip()}")
-    
-    # --->>> Read original values of T-Low/T-High for restoration after test
-    org_t_low = subprocess.run(["i2cget", "-y", "-f", bus, dev, "0x02", "w"], capture_output=True, text=True)
-    org_t_high = subprocess.run(["i2cget", "-y", "-f", bus, dev, "0x03", "w"], capture_output=True, text=True)
-    
-    # --->>> Set T-Low Temp limit (Addr 0x02) to 1c
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x02", "0x0001", "w"])
-    
-    # --->>> Set T-High Temp limit (Addr 0x03) to 5c
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x03", "0x0005", "w"])
-    
-    # --->>> Write 'One-Shot' register to start conversion (Addr=0x04)
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x04", "0x00"])
-     
-    # --->>> Re-read values of T-Low/T-High
-    cur_t_low  = subprocess.run(["i2cget", "-y", "-f", bus, dev, "0x02", "w"], capture_output=True, text=True)
-    cur_t_high = subprocess.run(["i2cget", "-y", "-f", bus, dev, "0x03", "w"], capture_output=True, text=True)
-    print (f"Current T-Low: {cur_t_low}, T-High: {cur_t_high}")
-    
-    # --->>> TODO: Read GPIO to see if interrupt is activated
-    
-    # --->>> Restore original values of T-Low/T-High before moving to next device
-    print (f"Restoring Org T-Low: {org_t_low} T-High: {org_t_high}")
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x02", org_t_low, "w"])
-    subprocess.run(["i2cset", "-y", "-f", bus, dev, "0x03", org_t_high, "w"])
-    
-# ---->>>> Call tests for all devices...
-check_temp_int("0x04", "0x48")
+TEMP_CHIPS = [
+    {"name": "U60", "bus": "0x04", "dev": "0x48"},
+    {"name": "U61", "bus": "0x04", "dev": "0x4C"},
+    {"name": "U62", "bus": "0x04", "dev": "0x49"},
+    {"name": "U64", "bus": "0x04", "dev": "0x4A"},
+    {"name": "U127", "bus": "0x00", "dev": "0x49"},
+]
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def i2cget(bus, dev, reg, mode=None):
+    if sim_mode:
+        return "0x00"
+    args = ["i2cget", "-y", "-f", bus, dev, reg]
+    if mode is not None:
+        args.append(mode)
+    completed = subprocess.run(args, capture_output=True, text=True, check=True)
+    return completed.stdout.strip()
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def i2cset(bus, dev, reg, value, mode=None):
+    if sim_mode:
+        return  
+    args = ["i2cset", "-y", "-f", bus, dev, reg, value]
+    if mode is not None:
+        args.append(mode)
+    subprocess.run(args, capture_output=True, text=True, check=True)
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def read_gpio_pc04():
+    try:
+        with open("/sys/kernel/debug/gpio", "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return "unknown"
+
+    for line in lines:
+        if "PC_04" in line:
+            match = re.search(r"\b(?:hi|lo)\b", line)
+            if match:
+                return match.group(0)
+            return "unknown"
+    return "unknown"
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def temp75b_check_int(chip_info):
+    bus = chip_info["bus"]
+    dev = chip_info["dev"]
+
+    org_t_low = i2cget(bus, dev, REG_TLOW, "w")
+    org_t_high = i2cget(bus, dev, REG_THIGH, "w")
+
+    print(f"{C_YELLOW_B}")
+    print("****************************************************")
+    print(f"* Testing Temp Sens {chip_info['name']}: Addr {dev} on i2c bus {bus}")
+    print(f"* T-Low={org_t_low}c, T-High={org_t_high}c")
+    print("****************************************************")
+    print(f"{C_NONE}", end="")
+    time.sleep(0.1)
+
+    i2cset(bus, dev, REG_CR, "0x00")
+
+    int_before = read_gpio_pc04()
+
+    i2cset(bus, dev, REG_THIGH, "+5", "w")
+    i2cset(bus, dev, REG_TLOW, "+2", "w")
+
+    int_during = read_gpio_pc04()
+
+    t_low = i2cget(bus, dev, REG_TLOW, "w")
+    t_high = i2cget(bus, dev, REG_THIGH, "w")
+
+    i2cset(bus, dev, REG_TLOW, org_t_low, "w")
+    i2cset(bus, dev, REG_THIGH, org_t_high, "w")
+
+    cur_temp = i2cget(bus, dev, REG_TEMP, "w")
+    cur_temp = int(cur_temp, 0) & 0xFF
+
+    int_after = read_gpio_pc04()
+
+    print(
+        f"  T-High/T-Low test: Temp={cur_temp}c, T-Low={t_low}c, T-High={t_high}c, Before({int_before}), During({int_during}), After({int_after}) - ",
+        end="",
+    )
+
+    ok_before = int_before == "hi"
+    ok_during = int_during == "lo"
+    ok_after = int_after == "hi"
+
+    if ok_before:
+        print(f"{C_GREEN_B}Pass,{C_NONE}", end="")
+    else:
+        print(f"{C_RED_B}FAIL,{C_NONE}", end="")
+
+    if ok_during:
+        print(f"{C_GREEN_B}Pass,{C_NONE}", end="")
+    else:
+        print(f"{C_RED_B}FAIL,{C_NONE}", end="")
+
+    if ok_after:
+        print(f"{C_GREEN_B}Pass{C_NONE}")
+    else:
+        print(f"{C_RED_B}FAIL{C_NONE}")
+
+
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def main():
+    global debug_mode
+    global sim_mode
+    debug_mode = False
+    sim_mode = False
     
+    for arg in sys.argv[1:]:
+        if arg == "debug":
+            debug_mode = True
+        elif arg == "sim":
+            sim_mode = True
+
+    for chip in TEMP_CHIPS:
+        temp75b_check_int(chip)
+    return 0
+
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+if __name__ == "__main__":
+    raise SystemExit(main())

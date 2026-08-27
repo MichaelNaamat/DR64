@@ -28,12 +28,14 @@ GPIO_CHIPS = [
     {"name": "U146", "bus": "0x00", "dev": "0x74"},
 ]
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def run_i2cget(bus, dev, reg):
+    if sim_mode:
+        return 0x00
     completed = subprocess.run(["i2cget", "-y", "-f", bus, dev, reg], capture_output=True, text=True, check=True)
     return int(completed.stdout.strip(), 16)
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def gpio_check_dev(chip_info):
     bus = chip_info["bus"]
     dev = chip_info["dev"]
@@ -75,12 +77,24 @@ def gpio_check_dev(chip_info):
     else:
         print(f"  {C_RED_B}FAIL (0x{inval1:02X}!=0x{outval1:02X}){C_NONE}")
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def main():
+    global debug_mode
+    global sim_mode
+    debug_mode = False
+    sim_mode = False
+    
+    for arg in sys.argv[1:]:
+        if arg == "debug":
+            debug_mode = True
+        elif arg == "sim":
+            sim_mode = True
+
     for chip in GPIO_CHIPS:
         gpio_check_dev(chip)
     return 0
 
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Entry point
 if __name__ == "__main__":
     raise SystemExit(main())
