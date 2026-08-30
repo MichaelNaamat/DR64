@@ -8,43 +8,41 @@ import script_defs as defs
 
 @dataclass(frozen=True)
 
-# --->>> PMIC Chip Definition
-class PmicChip:
-    name: str
-    bus: str
-    dev: str
-
-# --->>> PMIC Tester Class Definition
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# PMIC Tester Class Definition
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class PMICTester:
-    REG_PMIC_DEVICEID = "0x2B"
+    REG_DEVICEID = "0x2B"
 
-    def __init__(self, chips: list[PmicChip], i2c_client: defs.I2CClient):
+    def __init__(self, chips: list[defs.CChipDef], i2c_client: defs.I2CClient):
         self.chips = chips
         self.i2c_client = i2c_client
 
-    def _print_header(self, chip: PmicChip) -> None:
+    def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
         print("*******************************************************")
         print(f"* Testing PMIC {chip.name}: Addr {chip.dev} on i2c bus {chip.bus}")
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
-    def check_device(self, chip: PmicChip) -> None:
+    def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_id = self.i2c_client.get(chip.bus, chip.dev, self.REG_PMIC_DEVICEID, "w")
+        dev_id = self.i2c_client.get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device ID={dev_id}{defs.C_NONE}")
 
     def run(self) -> None:
         for chip in self.chips:
             self.check_device(chip)
 
-# --->>> PMIC Application Class Definition
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# PMIC Application Class Definition
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class PMICApplication:
     def __init__(self, argv: list[str]):
         self.argv = argv
         self.chips = [
-            PmicChip(name="U54", bus="0x04", dev="0x20"),
-            PmicChip(name="U54", bus="0x04", dev="0x21"),
+            defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
+            defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
         ]
 
     def configure_modes(self) -> None:
@@ -63,7 +61,9 @@ class PMICApplication:
         PMICTester(self.chips, i2c_client).run()
         return 0
 
-# --->>> Main Entry Point
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Main Entry Point
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main() -> int:
     return PMICApplication(sys.argv).run()
 
