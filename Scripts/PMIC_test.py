@@ -5,8 +5,7 @@ from dataclasses import dataclass
 
 import script_defs as defs
 
-
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # PMIC Tester Class Definition
@@ -38,6 +37,10 @@ class PMICTester:
 # PMIC Application Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class PMICApplication:
+    HOST = "10.0.0.102"      # Replace with your remote Linux IP or hostname
+    USER = "root"      # Replace with your remote Linux username
+    PASSWORD = ""  # Replace with your remote Linux password
+
     def __init__(self, argv: list[str]):
         self.argv = argv
         self.chips = [
@@ -57,8 +60,10 @@ class PMICApplication:
 
     def run(self) -> int:
         self.configure_modes()
-        i2c_client = defs.I2CClient(simulate=defs.sim_mode)
+        i2c_client = defs.I2CClient(hostname=self.HOST, username=self.USER, password=self.PASSWORD, simulate=defs.sim_mode)
+        i2c_client.connect()
         PMICTester(self.chips, i2c_client).run()
+        i2c_client.close()
         return 0
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -1,4 +1,6 @@
 import subprocess
+from tokenize import Name
+import paramiko
 import re
 
 C_RED = "\033[0;31m"
@@ -18,25 +20,66 @@ class CChipDef:
     name: str
     bus: str
     dev: str
+    def __init__(self, name, bus, dev):
+        self.name = name
+        self.bus = bus
+        self.dev = dev
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # I2C Client Definition
+# Parameters:
+#   simulate: Flag to indicate simulation (not accessing H/W, for debugging purposes)
+#   dev: I2C device address as a string (e.g., "0x37")
+#   reg: Register address as a string (e.g., "0x01")
+#   mode: Optional mode for I2C access (e.g., "b" for byte, "w" for word)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class I2CClient:
-    def __init__(self, simulate: bool = False):
+    def __init__(self, hostname, username, password, port=22, simulate: bool = False):
+        self.hostname = hostname
+        self.username = username
+        self.password = password
+        self.port = port
         self.simulate = simulate
+        self.ssh_client = None
+
+    # --->>> Connect to the remote Linux host via SSH
+    def connect(self):
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        print(f"Connecting to {self.hostname}...")
+        self.ssh_client.connect(
+            hostname=self.hostname,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+        )
+
+    # --->>> Close the SSH connection to the remote Linux host
+    def close(self):
+        if self.ssh_client is not None:
+            self.ssh_client.close()
+            print("Connection closed.")
+            self.ssh_client = None
 
     # --->>> I2C Get Method to read byte/word register from the device via I2C bus
     def get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
+        cmd = "i2cget -y -f " + bus + " " + dev + " " + reg
+        if mode is not None:
+            cmd += " " + mode
+
         if self.simulate:
             return "0x00"
 
-        args = ["i2cget", "-y", "-f", bus, dev, reg]
-        if mode is not None:
-            args.append(mode)
+##        completed = subprocess.run(cmd, capture_output=True, text=True, check=True, shell=True)
+##        return completed.stdout.strip()
+        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
+        _ = stdin
 
-        completed = subprocess.run(args, capture_output=True, text=True, check=True)
-        return completed.stdout.strip()
+        output = stdout.read().decode("utf-8", errors="replace")
+        errors = stderr.read().decode("utf-8", errors="replace")
+        if errors:
+            print(f"Errors occurred: {errors}")
+        return output.strip()
     
     # --->>> I2C Get Method to read byte/word register from the device via I2C bus, as integer
     def get_int(self, bus: str, dev: str, reg: str, mode: str | None = None) -> int:
@@ -47,11 +90,11 @@ class I2CClient:
         if self.simulate:
             return
 
-        args = ["i2cset", "-y", "-f", bus, dev, reg, value]
+        cmd = "i2cset -y -f " + bus + " " + dev + " " + reg + " " + value
         if mode is not None:
-            args.append(mode)
+            cmd += " " + mode
 
-        subprocess.run(args, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True, shell=True)
         
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # GPIO Reader Definition
