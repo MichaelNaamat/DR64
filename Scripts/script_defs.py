@@ -13,6 +13,10 @@ C_YELLOW_B = "\033[1;33m"
 C_BLUE_B = "\033[1;34m"
 C_NONE = "\033[0m"
 
+SSH_HOST = "10.0.0.102"     # Replace with your remote Linux IP or hostname
+SSH_USER = "root"           # Replace with your remote Linux username
+SSH_PASSWORD = ""           # Replace with your remote Linux password
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Chip Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

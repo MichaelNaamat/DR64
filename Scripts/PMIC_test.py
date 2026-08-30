@@ -37,10 +37,6 @@ class PMICTester:
 # PMIC Application Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class PMICApplication:
-    HOST = "10.0.0.102"      # Replace with your remote Linux IP or hostname
-    USER = "root"      # Replace with your remote Linux username
-    PASSWORD = ""  # Replace with your remote Linux password
-
     def __init__(self, argv: list[str]):
         self.argv = argv
         self.chips = [
@@ -60,7 +56,7 @@ class PMICApplication:
 
     def run(self) -> int:
         self.configure_modes()
-        i2c_client = defs.I2CClient(hostname=self.HOST, username=self.USER, password=self.PASSWORD, simulate=defs.sim_mode)
+        i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
         i2c_client.connect()
         PMICTester(self.chips, i2c_client).run()
         i2c_client.close()
