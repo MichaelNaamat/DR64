@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import subprocess
 import sys
 from dataclasses import dataclass
 
@@ -15,39 +14,11 @@ class PmicChip:
     bus: str
     dev: str
 
-# --->>> I2C Client Definition
-class I2CClient:
-    def __init__(self, simulate: bool = False):
-        self.simulate = simulate
-
-    # --->>> I2C Get Method to read byte/word register from the device via I2C bus
-    def get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
-        if self.simulate:
-            return "0x00"
-
-        args = ["i2cget", "-y", "-f", bus, dev, reg]
-        if mode is not None:
-            args.append(mode)
-
-        completed = subprocess.run(args, capture_output=True, text=True, check=True)
-        return completed.stdout.strip()
-    
-    # --->>> I2C Set Method to write byte/word register to the device via I2C bus
-    def set(self, bus: str, dev: str, reg: str, value: str, mode: str | None = None) -> None:
-        if self.simulate:
-            return
-
-        args = ["i2cset", "-y", "-f", bus, dev, reg, value]
-        if mode is not None:
-            args.append(mode)
-
-        subprocess.run(args, capture_output=True, text=True, check=True)
-        
 # --->>> PMIC Tester Class Definition
 class PMICTester:
     REG_PMIC_DEVICEID = "0x2B"
 
-    def __init__(self, chips: list[PmicChip], i2c_client: I2CClient):
+    def __init__(self, chips: list[PmicChip], i2c_client: defs.I2CClient):
         self.chips = chips
         self.i2c_client = i2c_client
 
@@ -88,7 +59,7 @@ class PMICApplication:
 
     def run(self) -> int:
         self.configure_modes()
-        i2c_client = I2CClient(simulate=defs.sim_mode)
+        i2c_client = defs.I2CClient(simulate=defs.sim_mode)
         PMICTester(self.chips, i2c_client).run()
         return 0
 
