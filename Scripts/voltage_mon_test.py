@@ -103,6 +103,7 @@ class VoltageMonitorTester:
     REG_UV_LF    = ["0x22", "0x32", "0x42", "0x52", "0x62", "0x72", "0x82", "0x92"]
     REG_OV_LF    = ["0x23", "0x33", "0x43", "0x53", "0x63", "0x73", "0x83", "0x93"]
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, chips: List[VoltageMonitorChip], i2c_client: defs.I2CClient, client: VoltageMonitorClient, debug_mode: bool):
         self.chips = chips
         self.i2c_client = i2c_client
@@ -127,6 +128,7 @@ class VoltageMonitorTester:
             f"{defs.C_RED_B}FAIL{defs.C_NONE}" if after_state == "0" else f"{defs.C_GREEN_B}Pass{defs.C_NONE}"
         )
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_channel(self, bus: str, dev: str, ch: int, ch_info: VoltageChannel, coef: float, mul: float) -> None:
         min_val = ch_info.min_val
         typ_val = ch_info.typ_val
@@ -186,6 +188,7 @@ class VoltageMonitorTester:
 
         self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: VoltageMonitorChip) -> None:
         bus = chip.bus
         dev = chip.dev
@@ -219,88 +222,72 @@ class VoltageMonitorTester:
 
             ch_ind += 1
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
             self.check_device(chip)
 
-
-class VoltageMonitorApplication:
-    def __init__(self, argv: List[str]):
-        self.argv = argv
-        self.chips = self._build_chips()
-
-    @staticmethod
-    def _build_chips() -> List[VoltageMonitorChip]:
-        u93_channels: List[Optional[VoltageChannel]] = [
-            channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
-            channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
-            channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
-            channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
-            channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
-            channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
-            channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
-            channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
-        ]
-
-        u94_channels: List[Optional[VoltageChannel]] = [
-            channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
-            channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
-            channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
-            channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
-            channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
-            channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
-            channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
-            channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
-        ]
-
-        u95_channels: List[Optional[VoltageChannel]] = [
-            channel("1.1V (USS_12v_M) +/-5%", 1.03835, 1.1, 1.14765),
-            channel("5V (5V_CAN) +/-5%", 4.75, 5.0, 5.25),
-            channel("1.2V (DES_1v2) +/-5%", 1.14, 1.2, 1.26),
-            channel("1.2V (5V_AOLDO_M) +/-5%", 1.12575, 1.185, 1.24425),
-            channel("0.8V (DES_0V8) +/-5%", 0.76, 0.8, 0.84),
-            channel("3.3V (3V3) +/-5%", 3.135, 3.3, 3.465),
-            channel("1.1V (12vPoC_M) +/-5%", 1.03835, 1.1, 1.14765),
-            channel("5V", 4.75, 5.0, 5.25),
-        ]
-
-        u114_channels: List[Optional[VoltageChannel]] = [
-            channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
-            channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
-            channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
-            channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
-            channel("0.84V () +/-5%", 0.798, 0.84, 0.882),
-            channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
-            channel("1.8V (ETH_1v8) +/-5%", 1.71, 1.8, 1.89),
-            channel("5V (Main 5V) +/-5%", 4.75, 5.0, 5.25),
-        ]
-
-        return [
-            VoltageMonitorChip(name="U93", bus="0x00", dev="0x37", channels=u93_channels),
-            VoltageMonitorChip(name="U94", bus="0x00", dev="0x36", channels=u94_channels),
-            VoltageMonitorChip(name="U95", bus="0x00", dev="0x35", channels=u95_channels),
-            VoltageMonitorChip(name="U114", bus="0x00", dev="0x34", channels=u114_channels),
-        ]
-
-    def configure_modes(self) -> None:
-        defs.debug_mode = False
-        defs.sim_mode = False
-
-        for arg in self.argv[1:]:
-            if arg == "debug":
-                defs.debug_mode = True
-            elif arg == "sim":
-                defs.sim_mode = True
-
-    def run(self) -> int:
-        self.configure_modes()
-        client = VoltageMonitorClient(simulate=defs.sim_mode)
-        VoltageMonitorTester(self.chips, client, defs.debug_mode).run()
-        return 0
-
-
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Main Entry Point
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main(argv: List[str]) -> int:
-    return VoltageMonitorApplication(argv).run()
+    u93_channels: List[Optional[VoltageChannel]] = [
+        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
+        channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
+        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
+        channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
+        channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
+        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
+        channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
+        channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
+    ]
+
+    u94_channels: List[Optional[VoltageChannel]] = [
+        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
+        channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
+        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
+        channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
+        channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
+        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
+        channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
+        channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
+    ]
+
+    u95_channels: List[Optional[VoltageChannel]] = [
+        channel("1.1V (USS_12v_M) +/-5%", 1.03835, 1.1, 1.14765),
+        channel("5V (5V_CAN) +/-5%", 4.75, 5.0, 5.25),
+        channel("1.2V (DES_1v2) +/-5%", 1.14, 1.2, 1.26),
+        channel("1.2V (5V_AOLDO_M) +/-5%", 1.12575, 1.185, 1.24425),
+        channel("0.8V (DES_0V8) +/-5%", 0.76, 0.8, 0.84),
+        channel("3.3V (3V3) +/-5%", 3.135, 3.3, 3.465),
+        channel("1.1V (12vPoC_M) +/-5%", 1.03835, 1.1, 1.14765),
+        channel("5V", 4.75, 5.0, 5.25),
+    ]
+
+    u114_channels: List[Optional[VoltageChannel]] = [
+        channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("0.84V () +/-5%", 0.798, 0.84, 0.882),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("1.8V (ETH_1v8) +/-5%", 1.71, 1.8, 1.89),
+        channel("5V (Main 5V) +/-5%", 4.75, 5.0, 5.25),
+    ]
+
+    chips = [
+        VoltageMonitorChip(name="U93", bus="0x00", dev="0x37", channels=u93_channels),
+        VoltageMonitorChip(name="U94", bus="0x00", dev="0x36", channels=u94_channels),
+        VoltageMonitorChip(name="U95", bus="0x00", dev="0x35", channels=u95_channels),
+        VoltageMonitorChip(name="U114", bus="0x00", dev="0x34", channels=u114_channels),
+    ]
+    defs.configure_modes(argv)
+    
+    i2c_client = VoltageMonitorClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    i2c_client.connect()
+    VoltageMonitorTester(chips, i2c_client, defs.debug_mode).run()
+    i2c_client.close()  
+    return 0
 
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
