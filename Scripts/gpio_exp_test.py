@@ -21,10 +21,12 @@ class GPIOExpanderTester:
     REG_CONF0 = "0x06"
     REG_CONF1 = "0x07"
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient):
         self.chips = chips
         self.i2c_client = i2c_client
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
         print("*******************************************************")
@@ -32,6 +34,7 @@ class GPIOExpanderTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _read_ports(self, chip: defs.CChipDef) -> tuple[int, int, int, int, int, int, int, int]:
         din0 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DIN0)
         din1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DIN1)
@@ -43,6 +46,7 @@ class GPIOExpanderTester:
         conf1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_CONF1)
         return din0, din1, dout0, dout1, pol0, pol1, conf0, conf1
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
 
@@ -53,6 +57,7 @@ class GPIOExpanderTester:
         outval1 = dout1 & ~conf1
         inval1 = din1 & ~conf1
 
+        # --->>>> Flip signal defined in polarity inversion
         inval0 ^= pol0
         outval0 ^= pol0
         inval1 ^= pol1
@@ -70,44 +75,26 @@ class GPIOExpanderTester:
         else:
             print(f"  {defs.C_RED_B}FAIL (0x{inval1:02X}!=0x{outval1:02X}){defs.C_NONE}")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
             self.check_device(chip)
-
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# GPIO Expander Application Class Definition
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class GPIOApplication:
-    def __init__(self, argv: List[str]):
-        self.argv = argv
-        self.chips = [
-            defs.CChipDef(name="U103", bus="0x04", dev="0x74"),
-            defs.CChipDef(name="U104", bus="0x00", dev="0x75"),
-            defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
-        ]
-
-    def configure_modes(self) -> None:
-        defs.debug_mode = False
-        defs.sim_mode = False
-
-        for arg in self.argv[1:]:
-            if arg == "debug":
-                defs.debug_mode = True
-            elif arg == "sim":
-                defs.sim_mode = True
-
-    def run(self) -> int:
-        self.configure_modes()
-        i2c_client = defs.I2CClient(simulate=defs.sim_mode)
-        defs.GPIOExpanderTester(self.chips, i2c_client).run()
-        return 0
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main() -> int:
-    return GPIOApplication(sys.argv).run()
+    chips = [
+        defs.CChipDef(name="U103", bus="0x04", dev="0x74"),
+        defs.CChipDef(name="U104", bus="0x00", dev="0x75"),
+        defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
+    ]
+    defs.configure_modes(sys.argv)
+    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    i2c_client.connect()
+    defs.GPIOExpanderTester(chips, i2c_client).run()
+    i2c_client.close()
+    return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Entry point

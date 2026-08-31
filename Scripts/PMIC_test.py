@@ -13,10 +13,12 @@ import script_defs as defs
 class PMICTester:
     REG_DEVICEID = "0x2B"
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, chips: list[defs.CChipDef], i2c_client: defs.I2CClient):
         self.chips = chips
         self.i2c_client = i2c_client
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
         print("*******************************************************")
@@ -24,11 +26,13 @@ class PMICTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
         dev_id = self.i2c_client.get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device ID={dev_id}{defs.C_NONE}")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
             self.check_device(chip)

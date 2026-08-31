@@ -21,11 +21,13 @@ class TempSensorInterruptTester:
     REG_THIGH = "0x03"
     REG_OS = "0x04"
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient, gpio_reader: defs.GPIOReader):
         self.chips = chips
         self.i2c_client = i2c_client
         self.gpio_reader = gpio_reader
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef, t_low: str, t_high: str) -> None:
         print(f"{defs.C_YELLOW_B}")
         print("****************************************************")
@@ -34,6 +36,7 @@ class TempSensorInterruptTester:
         print("****************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_interrupt(self, chip: defs.CChipDef) -> None:
         org_t_low = self.i2c_client.get(chip.bus, chip.dev, self.REG_TLOW, "w")
         org_t_high = self.i2c_client.get(chip.bus, chip.dev, self.REG_THIGH, "w")
@@ -86,6 +89,7 @@ class TempSensorInterruptTester:
         else:
             print(f"{defs.C_RED_B}FAIL{defs.C_NONE}")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
             self.check_interrupt(chip)
@@ -96,10 +100,10 @@ class TempSensorInterruptTester:
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main():
     chips = [
-        defs.CChipDef(name="U60", bus="0x04", dev="0x48"),
-        defs.CChipDef(name="U61", bus="0x04", dev="0x4C"),
-        defs.CChipDef(name="U62", bus="0x04", dev="0x49"),
-        defs.CChipDef(name="U64", bus="0x04", dev="0x4A"),
+        defs.CChipDef(name="U60" , bus="0x04", dev="0x48"),
+        defs.CChipDef(name="U61" , bus="0x04", dev="0x4C"),
+        defs.CChipDef(name="U62" , bus="0x04", dev="0x49"),
+        defs.CChipDef(name="U64" , bus="0x04", dev="0x4A"),
         defs.CChipDef(name="U127", bus="0x00", dev="0x49"),
     ]
 

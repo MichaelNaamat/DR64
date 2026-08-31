@@ -18,10 +18,12 @@ class PowerSupplyTester:
     REG_CONTROL3 = "0x03"
     REG_STATUS = "0x04"
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient):
         self.chips = chips
         self.i2c_client = i2c_client
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
         print("*******************************************************")
@@ -29,6 +31,7 @@ class PowerSupplyTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
 
@@ -43,49 +46,31 @@ class PowerSupplyTester:
             f"Control2={control2}, Control3={control3}, Status={status}{defs.C_NONE}"
         )
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
             self.check_device(chip)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Power Supply Application Class Definition
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class PowerSupplyApplication:
-    def __init__(self, argv: List[str]):
-        self.argv = argv
-        self.chips = [
-            defs.CChipDef(name="U33"   , bus="0x01", dev="0x33"),
-            defs.CChipDef(name="A_U26" , bus="0x01", dev="0x40"),
-            defs.CChipDef(name="A_U18" , bus="0x01", dev="0x43"),
-            defs.CChipDef(name="A_U100", bus="0x01", dev="0x46"),
-            defs.CChipDef(name="U32"   , bus="0x02", dev="0x30"),
-            defs.CChipDef(name="B_U26" , bus="0x02", dev="0x40"),
-            defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
-            defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
-        ]
-
-    def configure_modes(self) -> None:
-        defs.debug_mode = False
-        defs.sim_mode = False
-
-        for arg in self.argv[1:]:
-            if arg == "debug":
-                defs.debug_mode = True
-            elif arg == "sim":
-                defs.sim_mode = True
-
-    def run(self) -> int:
-        self.configure_modes()
-        i2c_client = defs.I2CClient(simulate=defs.sim_mode)
-        PowerSupplyTester(self.chips, i2c_client).run()
-        return 0
-
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
 def main() -> int:
-    return PowerSupplyApplication(sys.argv).run()
+    chips = [
+        defs.CChipDef(name="U33"   , bus="0x01", dev="0x33"),
+        defs.CChipDef(name="A_U26" , bus="0x01", dev="0x40"),
+        defs.CChipDef(name="A_U18" , bus="0x01", dev="0x43"),
+        defs.CChipDef(name="A_U100", bus="0x01", dev="0x46"),
+        defs.CChipDef(name="U32"   , bus="0x02", dev="0x30"),
+        defs.CChipDef(name="B_U26" , bus="0x02", dev="0x40"),
+        defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
+        defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
+    ]
+    defs.configure_modes()
+    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    i2c_client.connect()
+    PowerSupplyTester(chips, i2c_client).run()
+    i2c_client.close()
+    return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Entry point
