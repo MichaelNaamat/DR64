@@ -43,26 +43,39 @@ class TempSensorInterruptTester:
         self._print_header(chip, org_t_low, org_t_high)
         time.sleep(0.1)
 
+        # --->>> Set Configuration Reg (0x01):
+        # OS (15)    = '0'
+        # CR (13-14) = '00'  | 37Hz conversion rate (typ) (default)
+        # FQ (11-12) = '00'  | 1 fault (default)
+        # POL (10)   = '0'   | ALERT is active low (default)
+        # TM  (9)    = '0'   | ALERT is in comperator mode (default)
+        # SD  (8)    = '0'   | Device is in continuous conversion mode (default)
+        # Mask: 0000 0000 = 0x00
         self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_CR, "0x00")
 
-        int_before = self.ssh_client.gpio_read("PC_04")
+        # ============ T-High test: Set T-High to +5c, T-Low to +2
+        int_before = self.ssh_client.gpio_read("PC_04")     # Read GPIO before setting T-High/T-Low
 
-        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, "+5", "w")
-        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_TLOW, "+2", "w")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, "+5", "w")  # Set T-High to +5c
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_TLOW, "+2", "w")   # Set T-Low to +2c
 
-        int_during = self.ssh_client.gpio_read("PC_04")
+        int_during = self.ssh_client.gpio_read("PC_04")     # Read GPIO after setting T-High/T-Low
 
+        # --->>> Read T-Low/T-High values & clear interrupt
         t_low = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TLOW, "w")
         t_high = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_THIGH, "w")
 
+        # --->>> Restore normal values 
         self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_TLOW, org_t_low, "w")
         self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, org_t_high, "w")
 
+        # --->>> Read current temperature
         cur_temp = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TEMP, "w")
         cur_temp = int(cur_temp, 0) & 0xFF
 
-        int_after = self.ssh_client.gpio_read("PC_04")
+        int_after = self.ssh_client.gpio_read("PC_04")      # Read GPIO after restoring T-High/T-Low values
 
+        # ---->>> Print results of interrupt test
         print(
             f"  T-High/T-Low test: Temp={cur_temp}c, T-Low={t_low}c, T-High={t_high}c, "
             f"Before({int_before}), During({int_during}), After({int_after}) - ",

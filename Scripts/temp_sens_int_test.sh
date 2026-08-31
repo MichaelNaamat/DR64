@@ -74,7 +74,7 @@ function temp75b_check_int()
     t_low=$(i2cget -y -f $bus $dev $REG_TLOW w)
     t_high=$(i2cget -y -f $bus $dev $REG_THIGH w)
 
-    # --->>> Restor normal values 
+    # --->>> Restore normal values 
     i2cset -y -f $bus $dev $REG_TLOW $org_t_low w
     i2cset -y -f $bus $dev $REG_THIGH $org_t_high w
 

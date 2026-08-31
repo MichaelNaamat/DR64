@@ -36,10 +36,10 @@ class PowerSupplyTester:
         self._print_header(chip)
 
         vset = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_VSET, "w")
-        control1 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL1, "w")
-        control2 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL2, "w")
-        control3 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL3, "w")
-        status   = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_STATUS, "w")
+        control1 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL1)
+        control2 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL2)
+        control3 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL3)
+        status   = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_STATUS)
 
         print(
             f"{defs.C_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, "

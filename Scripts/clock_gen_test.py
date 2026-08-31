@@ -32,8 +32,8 @@ class ClockGenTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_pn = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE, "w")
-        dev_rev = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV, "w")
+        dev_pn = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE)
+        dev_rev = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV)
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -36,14 +36,14 @@ class GPIOExpanderTester:
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _read_ports(self, chip: defs.CChipDef) -> tuple[int, int, int, int, int, int, int, int]:
-        din0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0, "w")
-        din1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN1, "w")
-        dout0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT0, "w")
-        dout1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT1, "w")
-        pol0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL0, "w")
-        pol1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL1, "w")
-        conf0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF0, "w")
-        conf1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1, "w")
+        din0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0)
+        din1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN1)
+        dout0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT0)
+        dout1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT1)
+        pol0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL0)
+        pol1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL1)
+        conf0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF0)
+        conf1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1)
         return din0, din1, dout0, dout1, pol0, pol1, conf0, conf1
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

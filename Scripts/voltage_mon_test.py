@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import json
-import subprocess
 import sys
-import urllib.request
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -16,8 +13,7 @@ class VoltageChannel:
     typ_val: float
     max_val: float
 
-
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Voltage Monitor Chip Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -27,62 +23,8 @@ class VoltageMonitorChip:
     dev: str
     channels: List[Optional[VoltageChannel]]
 
-
 def channel(name: str, min_val: float, typ_val: float, max_val: float) -> VoltageChannel:
     return VoltageChannel(name=name, min_val=min_val, typ_val=typ_val, max_val=max_val)
-
-class VoltageMonitorClient:
-    GPIO_URL = "http://10.0.0.102:8000/controller/gpio/read_values/"
-
-    def __init__(self, simulate: bool = False):
-        self.simulate = simulate
-
-## DEAD    def run_command(self, args: List[str]) -> str:
-## DEAD        if self.simulate:
-## DEAD            return "0xAA"
-## DEAD        completed = subprocess.run(args, capture_output=True, text=True, check=True)
-## DEAD        return completed.stdout.strip()
-## DEAD
-## DEAD    def i2cget(self, bus: str, dev: str, reg: str) -> str:
-## DEAD        return self.run_command(["i2cget", "-y", "-f", bus, dev, reg])
-## DEAD
-## DEAD    def i2cset(self, bus: str, dev: str, reg: str, value: str) -> None:
-## DEAD        self.run_command(["i2cset", "-y", "-f", bus, dev, reg, value])
-
-    def vmon_get_pin(self, pin: str) -> str:
-        if self.simulate:
-            return "0"
-
-        payload = json.dumps({"log_level": "INFO", "gpios": [pin]}).encode("utf-8")
-        request = urllib.request.Request(
-            self.GPIO_URL,
-            data=payload,
-            headers={"accept": "application/json", "Content-Type": "application/json"},
-            method="POST",
-        )
-
-        with urllib.request.urlopen(request, timeout=10) as response:
-            body = response.read().decode("utf-8")
-
-        try:
-            decoded = json.loads(body)
-            if isinstance(decoded, dict):
-                data = decoded.get("data", [])
-                if data:
-                    value = data[0].get("Val")
-                    if value is not None:
-                        return str(value)
-        except json.JSONDecodeError:
-            pass
-
-        return body.strip()
-
-    def read_hex_int(self, bus: str, dev: str, reg: str) -> int:
-        return int(self.i2cget(bus, dev, reg), 0)
-
-    @staticmethod
-    def format_voltage(raw_value: int, coef: float, mul: float) -> str:
-        return f"{coef + raw_value * mul:.3f}"
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Voltage Monitor Tester Class Definition
@@ -104,12 +46,12 @@ class VoltageMonitorTester:
     REG_OV_LF    = ["0x23", "0x33", "0x43", "0x53", "0x63", "0x73", "0x83", "0x93"]
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[VoltageMonitorChip], i2c_client: defs.I2CClient, client: VoltageMonitorClient, debug_mode: bool):
+    def __init__(self, chips: List[VoltageMonitorChip], ssh_client: defs.CSSHClient, debug_mode: bool):
         self.chips = chips
-        self.i2c_client = i2c_client
-        self.client = client
-        self.debug_mode = debug_mode
+        self.ssh_client = ssh_client
+        self.debug_mode = True # debug_mode
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     @staticmethod
     def print_interrupt_result(label: str, before_state: str, during_state: str, after_state: str) -> None:
         print(
@@ -117,42 +59,47 @@ class VoltageMonitorTester:
             end="",
         )
         print(
-            f"{defs.C_RED_B}FAIL,{defs.C_NONE}" if before_state == "0" else f"{defs.C_GREEN_B}Pass,{defs.C_NONE}",
+            f"{defs.C_GREEN_B}Pass,{defs.C_NONE}" if before_state == "hi" else f"{defs.C_RED_B}FAIL,{defs.C_NONE}",
             end="",
         )
         print(
-            f"{defs.C_RED_B}FAIL,{defs.C_NONE}" if during_state == "1" else f"{defs.C_GREEN_B}Pass,{defs.C_NONE}",
+            f"{defs.C_GREEN_B}Pass,{defs.C_NONE}" if during_state == "lo" else f"{defs.C_RED_B}FAIL,{defs.C_NONE}",
             end="",
         )
         print(
-            f"{defs.C_RED_B}FAIL{defs.C_NONE}" if after_state == "0" else f"{defs.C_GREEN_B}Pass{defs.C_NONE}"
-        )
+            f"{defs.C_GREEN_B}Pass,{defs.C_NONE}" if after_state == "hi" else f"{defs.C_RED_B}FAIL,{defs.C_NONE}",
+            end="\n",)
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    @staticmethod
+    def format_voltage(raw_value: int, coef: float, mul: float) -> str:
+        return f"{coef + raw_value * mul:.3f}"
+    
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_channel(self, bus: str, dev: str, ch: int, ch_info: VoltageChannel, coef: float, mul: float) -> None:
         min_val = ch_info.min_val
         typ_val = ch_info.typ_val
         max_val = ch_info.max_val
 
-        self.i2c_client.set(bus, dev, self.REG_BANK_SEL, "0x00")
-        mon_lvl = self.i2c_client.get(bus, dev, self.REG_VMON_LVL[ch])
+        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x00")        # Switch to bank 0 for VMON_LVL register
+        mon_lvl = self.ssh_client.i2c_get_int(bus, dev, self.REG_VMON_LVL[ch])
 
-        self.i2c_client.set(bus, dev, self.REG_BANK_SEL, "0x01")
-        uv_hf = self.i2c_client.get(bus, dev, self.REG_UV_HF[ch])
-        ov_hf = self.i2c_client.get(bus, dev, self.REG_OV_HF[ch])
-        uv_lf = self.i2c_client.get(bus, dev, self.REG_UV_LF[ch])
-        ov_lf = self.i2c_client.get(bus, dev, self.REG_OV_LF[ch])
+        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")        # Switch to bank 1 for UV/OV registers
+        uv_hf = self.ssh_client.i2c_get_int(bus, dev, self.REG_UV_HF[ch])
+        ov_hf = self.ssh_client.i2c_get_int(bus, dev, self.REG_OV_HF[ch])
+        uv_lf = self.ssh_client.i2c_get_int(bus, dev, self.REG_UV_LF[ch])
+        ov_lf = self.ssh_client.i2c_get_int(bus, dev, self.REG_OV_LF[ch])
 
         if mon_lvl <= 0 or mon_lvl > 255:
             print(f"{defs.C_RED_B}  >>> ERROR: Invalid monitor level ({mon_lvl}) for channel {ch}{defs.C_NONE}")
             return
 
         if self.debug_mode:
-            mon_lvl_v = self.i2c_client.format_voltage(mon_lvl, coef, mul)
-            uv_hf_v = self.i2c_client.format_voltage(uv_hf, coef, mul)
-            ov_hf_v = self.i2c_client.format_voltage(ov_hf, coef, mul)
-            uv_lf_v = self.i2c_client.format_voltage(uv_lf, coef, mul)
-            ov_lf_v = self.i2c_client.format_voltage(ov_lf, coef, mul)
+            mon_lvl_v = self.format_voltage(mon_lvl, coef, mul)
+            uv_hf_v = self.format_voltage(uv_hf, coef, mul)
+            ov_hf_v = self.format_voltage(ov_hf, coef, mul)
+            uv_lf_v = self.format_voltage(uv_lf, coef, mul)
+            ov_lf_v = self.format_voltage(ov_lf, coef, mul)
 
             print(
                 f"{defs.C_BLUE_B}  >>> DEBUG: Ch {ch}: min={min_val}, typ={typ_val}, max={max_val}, MON_LVL={mon_lvl_v}({mon_lvl})"
@@ -168,23 +115,23 @@ class VoltageMonitorTester:
             else:
                 print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
 
-        int_stat1 = self.i2c_client.read("PK_08")
+        int_stat1 = self.ssh_client.gpio_read("PK_08")
 
-        self.i2c_client.set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")
-        int_stat2 = self.i2c_client.read("PK_08")
+        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")
+        int_stat2 = self.ssh_client.gpio_read("PK_08")
 
-        self.i2c_client.set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")
-        int_stat3 = self.i2c_client.read("PK_08")
+        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")
+        int_stat3 = self.ssh_client.gpio_read("PK_08")
 
         self.print_interrupt_result(f"Ch {ch}: UV", int_stat1, int_stat2, int_stat3)
 
-        int_stat1 = self.i2c_client.read("PK_08")
+        int_stat1 = self.ssh_client.gpio_read("PK_08")
 
-        self.i2c_client.set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")
-        int_stat2 = self.i2c_client.read("PK_08")
+        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")
+        int_stat2 = self.ssh_client.gpio_read("PK_08")
 
-        self.i2c_client.set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")
-        int_stat3 = self.i2c_client.read("PK_08")
+        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")
+        int_stat3 = self.ssh_client.gpio_read("PK_08")
 
         self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)
 
@@ -193,18 +140,18 @@ class VoltageMonitorTester:
         bus = chip.bus
         dev = chip.dev
 
-        self.i2c_client.set(bus, dev, self.REG_BANK_SEL, "0x01")
-        vrange_mult = self.i2c_client.get(bus, dev, self.REG_VRANGE_MULT)
+        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")
+        vrange_mult = self.ssh_client.i2c_get_int(bus, dev, self.REG_VRANGE_MULT)
 
         print(defs.C_YELLOW)
         print("****************************************************")
         print(f"* Testing {chip.name}: Addr {dev} on i2c bus {bus} *")
         if self.debug_mode:
-            ien_uvhf = self.i2c_client.get(bus, dev, self.REG_IEN_UVHF)
-            ien_uvlf = self.i2c_client.get(bus, dev, self.REG_IEN_UVLF)
-            ien_ovhf = self.i2c_client.get(bus, dev, self.REG_IEN_OVHF)
-            ien_ovlf = self.i2c_client.get(bus, dev, self.REG_IEN_OVLF)
-            mon_ch_en = self.i2c_client.get(bus, dev, self.REG_MON_CH_EN)
+            ien_uvhf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_UVHF)
+            ien_uvlf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_UVLF)
+            ien_ovhf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_OVHF)
+            ien_ovlf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_OVLF)
+            mon_ch_en = self.ssh_client.i2c_get(bus, dev, self.REG_MON_CH_EN)
             print(
                 f"* Int enable: UVHF={ien_uvhf}, UVLF={ien_uvlf}, OVHF={ien_ovhf}, OVLF={ien_ovlf}, MON_CH_EN={mon_ch_en} *"
             )
@@ -283,10 +230,10 @@ def main(argv: List[str]) -> int:
     ]
     defs.configure_modes(argv)
     
-    i2c_client = VoltageMonitorClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    VoltageMonitorTester(chips, i2c_client, defs.debug_mode).run()
-    i2c_client.close()  
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    VoltageMonitorTester(chips, ssh_client, defs.debug_mode).run()
+    ssh_client.close()  
     return 0
 
 
