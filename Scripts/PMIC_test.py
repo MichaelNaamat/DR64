@@ -34,39 +34,20 @@ class PMICTester:
             self.check_device(chip)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# PMIC Application Class Definition
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class PMICApplication:
-    def __init__(self, argv: list[str]):
-        self.argv = argv
-        self.chips = [
-            defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
-            defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
-        ]
-
-    def configure_modes(self) -> None:
-        defs.debug_mode = False
-        defs.sim_mode = False
-
-        for arg in self.argv[1:]:
-            if arg == "debug":
-                defs.debug_mode = True
-            elif arg == "sim":
-                defs.sim_mode = True
-
-    def run(self) -> int:
-        self.configure_modes()
-        i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-        i2c_client.connect()
-        PMICTester(self.chips, i2c_client).run()
-        i2c_client.close()
-        return 0
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main() -> int:
-    return PMICApplication(sys.argv).run()
+    chips = [
+        defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
+        defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
+    ]
+    defs.configure_modes(sys.argv)
+
+    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    i2c_client.connect()
+    PMICTester(chips, i2c_client).run()
+    i2c_client.close()
+    return 0
 
 
 if __name__ == "__main__":

@@ -17,6 +17,8 @@ SSH_HOST = "10.0.0.102"     # Replace with your remote Linux IP or hostname
 SSH_USER = "root"           # Replace with your remote Linux username
 SSH_PASSWORD = ""           # Replace with your remote Linux password
 
+global debug_mode, sim_mode
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Chip Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -48,6 +50,8 @@ class I2CClient:
 
     # --->>> Connect to the remote Linux host via SSH
     def connect(self):
+        if self.simulate:
+            return 
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print(f"Connecting to {self.hostname}...")
@@ -60,6 +64,8 @@ class I2CClient:
 
     # --->>> Close the SSH connection to the remote Linux host
     def close(self):
+        if self.simulate:
+            return 
         if self.ssh_client is not None:
             self.ssh_client.close()
             print("Connection closed.")
@@ -120,4 +126,17 @@ class CGPIOReader:
                 return "unknown"
 
         return "unknown"
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Get program modes according to command-line arguments
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+def configure_modes(argv: list[str]) :
+    global debug_mode, sim_mode
+    debug_mode = False
+    sim_mode = False
+    for arg in argv[1:]:
+        if arg == "debug":
+            debug_mode = True
+        elif arg == "sim":
+            sim_mode = True
 

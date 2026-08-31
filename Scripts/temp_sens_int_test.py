@@ -95,15 +95,6 @@ class TempSensorInterruptTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main():
-    defs.debug_mode = False
-    defs.sim_mode = False
-
-    for arg in sys.argv[1:]:
-        if arg == "debug":
-            defs.debug_mode = True
-        elif arg == "sim":
-            defs.sim_mode = True
-
     chips = [
         defs.CChipDef(name="U60", bus="0x04", dev="0x48"),
         defs.CChipDef(name="U61", bus="0x04", dev="0x4C"),
@@ -112,9 +103,12 @@ def main():
         defs.CChipDef(name="U127", bus="0x00", dev="0x49"),
     ]
 
-    i2c_client = defs.I2CClient(simulate=defs.sim_mode)
+    defs.configure_modes(sys.argv)
+    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    i2c_client.connect()
     gpio_reader = defs.CGPIOReader()
-    defs.TempSensorInterruptTester(chips, i2c_client, gpio_reader).run()
+    TempSensorInterruptTester(chips, i2c_client, gpio_reader).run()
+    i2c_client.close()  
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
