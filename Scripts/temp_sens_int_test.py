@@ -9,7 +9,7 @@ from typing import List, Optional
 
 import script_defs as defs
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Temperature Sensor Interrupt Tester Class Definition
@@ -22,10 +22,9 @@ class TempSensorInterruptTester:
     REG_OS = "0x04"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient, gpio_reader: defs.GPIOReader):
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient):
         self.chips = chips
-        self.i2c_client = i2c_client
-        self.gpio_reader = gpio_reader
+        self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef, t_low: str, t_high: str) -> None:
@@ -38,31 +37,31 @@ class TempSensorInterruptTester:
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_interrupt(self, chip: defs.CChipDef) -> None:
-        org_t_low = self.i2c_client.get(chip.bus, chip.dev, self.REG_TLOW, "w")
-        org_t_high = self.i2c_client.get(chip.bus, chip.dev, self.REG_THIGH, "w")
+        org_t_low = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TLOW, "w")
+        org_t_high = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_THIGH, "w")
 
         self._print_header(chip, org_t_low, org_t_high)
         time.sleep(0.1)
 
-        self.i2c_client.set(chip.bus, chip.dev, self.REG_CR, "0x00")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_CR, "0x00")
 
-        int_before = self.gpio_reader.read("PC_04")
+        int_before = self.ssh_client.gpio_read("PC_04")
 
-        self.i2c_client.set(chip.bus, chip.dev, self.REG_THIGH, "+5", "w")
-        self.i2c_client.set(chip.bus, chip.dev, self.REG_TLOW, "+2", "w")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, "+5", "w")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_TLOW, "+2", "w")
 
-        int_during = self.gpio_reader.read("PC_04")
+        int_during = self.ssh_client.gpio_read("PC_04")
 
-        t_low = self.i2c_client.get(chip.bus, chip.dev, self.REG_TLOW, "w")
-        t_high = self.i2c_client.get(chip.bus, chip.dev, self.REG_THIGH, "w")
+        t_low = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TLOW, "w")
+        t_high = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_THIGH, "w")
 
-        self.i2c_client.set(chip.bus, chip.dev, self.REG_TLOW, org_t_low, "w")
-        self.i2c_client.set(chip.bus, chip.dev, self.REG_THIGH, org_t_high, "w")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_TLOW, org_t_low, "w")
+        self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, org_t_high, "w")
 
-        cur_temp = self.i2c_client.get(chip.bus, chip.dev, self.REG_TEMP, "w")
+        cur_temp = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TEMP, "w")
         cur_temp = int(cur_temp, 0) & 0xFF
 
-        int_after = self.gpio_reader.read("PC_04")
+        int_after = self.ssh_client.gpio_read("PC_04")
 
         print(
             f"  T-High/T-Low test: Temp={cur_temp}c, T-Low={t_low}c, T-High={t_high}c, "
@@ -70,21 +69,17 @@ class TempSensorInterruptTester:
             end="",
         )
 
-        ok_before = int_before == "hi"
-        ok_during = int_during == "lo"
-        ok_after = int_after == "hi"
-
-        if ok_before:
+        if int_before == "hi":
             print(f"{defs.C_GREEN_B}Pass,{defs.C_NONE}", end="")
         else:
             print(f"{defs.C_RED_B}FAIL,{defs.C_NONE}", end="")
 
-        if ok_during:
+        if int_during == "lo":
             print(f"{defs.C_GREEN_B}Pass,{defs.C_NONE}", end="")
         else:
             print(f"{defs.C_RED_B}FAIL,{defs.C_NONE}", end="")
 
-        if ok_after:
+        if int_after == "hi":
             print(f"{defs.C_GREEN_B}Pass{defs.C_NONE}")
         else:
             print(f"{defs.C_RED_B}FAIL{defs.C_NONE}")
@@ -108,11 +103,10 @@ def main():
     ]
 
     defs.configure_modes(sys.argv)
-    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    gpio_reader = defs.CGPIOReader()
-    TempSensorInterruptTester(chips, i2c_client, gpio_reader).run()
-    i2c_client.close()  
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    TempSensorInterruptTester(chips, ssh_client).run()
+    ssh_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

@@ -7,7 +7,7 @@ from typing import List
 
 import script_defs as defs
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Power Supply Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -19,9 +19,9 @@ class PowerSupplyTester:
     REG_STATUS = "0x04"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient):
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient):
         self.chips = chips
-        self.i2c_client = i2c_client
+        self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
@@ -35,11 +35,11 @@ class PowerSupplyTester:
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
 
-        vset = self.i2c_client.get(chip.bus, chip.dev, self.REG_VSET)
-        control1 = self.i2c_client.get(chip.bus, chip.dev, self.REG_CONTROL1)
-        control2 = self.i2c_client.get(chip.bus, chip.dev, self.REG_CONTROL2)
-        control3 = self.i2c_client.get(chip.bus, chip.dev, self.REG_CONTROL3)
-        status   = self.i2c_client.get(chip.bus, chip.dev, self.REG_STATUS)
+        vset = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_VSET, "w")
+        control1 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL1, "w")
+        control2 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL2, "w")
+        control3 = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_CONTROL3, "w")
+        status   = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_STATUS, "w")
 
         print(
             f"{defs.C_BLUE_B}  >>> DEBUG: VSET={vset}, Control1={control1}, "
@@ -65,11 +65,11 @@ def main() -> int:
         defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
         defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
     ]
-    defs.configure_modes()
-    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    PowerSupplyTester(chips, i2c_client).run()
-    i2c_client.close()
+    defs.configure_modes(sys.argv)
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    PowerSupplyTester(chips, ssh_client).run()
+    ssh_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

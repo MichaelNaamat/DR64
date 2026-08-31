@@ -6,7 +6,7 @@ from typing import List
 
 import script_defs as defs
 from dataclasses import dataclass
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # GPIO Expander Tester Class Definition
@@ -22,9 +22,9 @@ class GPIOExpanderTester:
     REG_CONF1 = "0x07"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient):
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient):
         self.chips = chips
-        self.i2c_client = i2c_client
+        self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
@@ -36,14 +36,14 @@ class GPIOExpanderTester:
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _read_ports(self, chip: defs.CChipDef) -> tuple[int, int, int, int, int, int, int, int]:
-        din0 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DIN0)
-        din1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DIN1)
-        dout0 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DOUT0)
-        dout1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_DOUT1)
-        pol0 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_POL0)
-        pol1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_POL1)
-        conf0 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_CONF0)
-        conf1 = self.i2c_client.get_int(chip.bus, chip.dev, self.REG_CONF1)
+        din0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0, "w")
+        din1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN1, "w")
+        dout0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT0, "w")
+        dout1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT1, "w")
+        pol0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL0, "w")
+        pol1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL1, "w")
+        conf0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF0, "w")
+        conf1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1, "w")
         return din0, din1, dout0, dout1, pol0, pol1, conf0, conf1
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -90,10 +90,10 @@ def main() -> int:
         defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
     ]
     defs.configure_modes(sys.argv)
-    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    defs.GPIOExpanderTester(chips, i2c_client).run()
-    i2c_client.close()
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    GPIOExpanderTester(chips, ssh_client).run()
+    ssh_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

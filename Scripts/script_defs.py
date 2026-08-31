@@ -1,7 +1,9 @@
-import subprocess
+## import subprocess
 from tokenize import Name
 import paramiko
 import re
+import json
+import urllib.request
 
 C_RED = "\033[0;31m"
 C_GREEN = "\033[0;32m"
@@ -32,14 +34,14 @@ class CChipDef:
         self.dev = dev
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# I2C Client Definition
+# SSH Client Definition
 # Parameters:
 #   simulate: Flag to indicate simulation (not accessing H/W, for debugging purposes)
 #   dev: I2C device address as a string (e.g., "0x37")
 #   reg: Register address as a string (e.g., "0x01")
 #   mode: Optional mode for I2C access (e.g., "b" for byte, "w" for word)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class I2CClient:
+class CSSHClient:
     def __init__(self, hostname, username, password, port=22, simulate: bool = False):
         self.hostname = hostname
         self.username = username
@@ -72,7 +74,7 @@ class I2CClient:
             self.ssh_client = None
 
     # --->>> I2C Get Method to read byte/word register from the device via I2C bus
-    def get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
+    def i2c_get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
         cmd = "i2cget -y -f " + bus + " " + dev + " " + reg
         if mode is not None:
             cmd += " " + mode
@@ -80,8 +82,6 @@ class I2CClient:
         if self.simulate:
             return "0x00"
 
-##        completed = subprocess.run(cmd, capture_output=True, text=True, check=True, shell=True)
-##        return completed.stdout.strip()
         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
         _ = stdin
 
@@ -92,11 +92,11 @@ class I2CClient:
         return output.strip()
     
     # --->>> I2C Get Method to read byte/word register from the device via I2C bus, as integer
-    def get_int(self, bus: str, dev: str, reg: str, mode: str | None = None) -> int:
-        return int(self.get(bus, dev, reg, mode), 16)
-    
+    def i2c_get_int(self, bus: str, dev: str, reg: str, mode: str | None = None) -> int:
+        return int(self.i2c_get(bus, dev, reg, mode), 16)
+
     # --->>> I2C Set Method to write byte/word register to the device via I2C bus
-    def set(self, bus: str, dev: str, reg: str, value: str, mode: str | None = None) -> None:
+    def i2c_set(self, bus: str, dev: str, reg: str, value: str, mode: str | None = None) -> None:
         if self.simulate:
             return
 
@@ -104,29 +104,63 @@ class I2CClient:
         if mode is not None:
             cmd += " " + mode
 
-        subprocess.run(cmd, capture_output=True, text=True, check=True, shell=True)
-        
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# GPIO Reader Definition
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class CGPIOReader:
-    @staticmethod
-    def read(PinName: str) -> str:
-        try:
-            with open("/sys/kernel/debug/gpio", "r", encoding="utf-8") as file:
-                lines = file.read().splitlines()
-        except OSError:
+        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
+        _ = stdin
+
+        output = stdout.read().decode("utf-8", errors="replace")
+        errors = stderr.read().decode("utf-8", errors="replace")
+        if errors:
+            print(f"Errors occurred: {errors}")
+
+    # --->>> Method that return the state of GPIO pin (high/low) by reading the /sys/kernel/debug/gpio file on the remote Linux host
+    def gpio_read(self, pin_name: str) -> str:
+        if self.simulate:
             return "unknown"
 
-        for line in lines:
-            if PinName in line:
-                match = re.search(r"\b(?:hi|lo)\b", line)
-                if match:
-                    return match.group(0)
-                return "unknown"
+        cmd = f"cat /sys/kernel/debug/gpio | grep {pin_name}"
+        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
+        _ = stdin
 
+        output = stdout.read().decode("utf-8", errors="replace")
+        errors = stderr.read().decode("utf-8", errors="replace")
+        if errors:
+            print(f"Errors occurred: {errors}")
+
+        match = re.search(r"\b(?:hi|lo)\b", output)
+        if match:
+            return match.group(0)
         return "unknown"
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def gpio_read_AVIVA (self, pin_name : str) -> str:
+        if self.simulate:
+            return "unknown"
 
+        GPIO_URL = "http://10.0.0.102:8000/controller/gpio/read_values/"
+        payload = json.dumps({"log_level": "INFO", "gpios": [pin]}).encode("utf-8")
+        request = urllib.request.Request(
+            self.GPIO_URL,
+            data=payload,
+            headers={"accept": "application/json", "Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urllib.request.urlopen(request, timeout=10) as response:
+            body = response.read().decode("utf-8")
+
+        try:
+            decoded = json.loads(body)
+            if isinstance(decoded, dict):
+                data = decoded.get("data", [])
+                if data:
+                    value = data[0].get("Val")
+                    if value is not None:
+                        return str(value)
+        except json.JSONDecodeError:
+            pass
+
+        return body.strip()
+        
+    
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Get program modes according to command-line arguments
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

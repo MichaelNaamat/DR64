@@ -7,7 +7,7 @@ from typing import List, Optional
 
 import script_defs as defs
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Clock-Gen Tester Class Definition
@@ -17,9 +17,9 @@ class ClockGenTester:
     REG_DEVICE_REV = "0x0E"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], i2c_client: defs.I2CClient): 
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient): 
         self.chips = chips
-        self.i2c_client = i2c_client
+        self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
@@ -32,8 +32,8 @@ class ClockGenTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_pn = self.i2c_client.get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE)
-        dev_rev = self.i2c_client.get(chip.bus, chip.dev, self.REG_DEVICE_REV)
+        dev_pn = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE, "w")
+        dev_rev = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV, "w")
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -50,10 +50,10 @@ def main() -> int:
         defs.CChipDef(name="U88", bus="0x01", dev="0x6B"),
     ]
     defs.configure_modes(sys.argv)
-    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    ClockGenTester(chips, i2c_client).run()
-    i2c_client.close()
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    ClockGenTester(chips, ssh_client).run()
+    ssh_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

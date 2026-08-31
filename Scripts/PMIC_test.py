@@ -14,9 +14,9 @@ class PMICTester:
     REG_DEVICEID = "0x2B"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: list[defs.CChipDef], i2c_client: defs.I2CClient):
+    def __init__(self, chips: list[defs.CChipDef], ssh_client: defs.CSSHClient):
         self.chips = chips
-        self.i2c_client = i2c_client
+        self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
@@ -29,7 +29,7 @@ class PMICTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_id = self.i2c_client.get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
+        dev_id = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device ID={dev_id}{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -47,10 +47,10 @@ def main() -> int:
     ]
     defs.configure_modes(sys.argv)
 
-    i2c_client = defs.I2CClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    i2c_client.connect()
-    PMICTester(chips, i2c_client).run()
-    i2c_client.close()
+    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client.connect()
+    PMICTester(chips, ssh_client).run()
+    ssh_client.close()
     return 0
 
 
