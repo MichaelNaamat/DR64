@@ -8,7 +8,7 @@ import script_defs as defs
 from dataclasses import dataclass
 @dataclass(frozen=False)
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # GPIO Expander Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class GPIOExpanderTester:
@@ -21,11 +21,18 @@ class GPIOExpanderTester:
     REG_CONF0 = "0x06"
     REG_CONF1 = "0x07"
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Constructor Method to initialize the GPIOExpanderTester 
+    # class with a list of chip definitions and a remote
+    # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient):
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CBaseClient):
         self.chips = chips
         self.ssh_client = ssh_client
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Print Header Method to display a header for the chip 
+    # being tested
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
@@ -34,6 +41,9 @@ class GPIOExpanderTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Read Ports Method to read the input, output, polarity, 
+    # and configuration registers from the chip
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _read_ports(self, chip: defs.CChipDef) -> tuple[int, int, int, int, int, int, int, int]:
         din0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0)
@@ -46,6 +56,9 @@ class GPIOExpanderTester:
         conf1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1)
         return din0, din1, dout0, dout1, pol0, pol1, conf0, conf1
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Check Device Method to verify the functionality of the 
+    # GPIO expander
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
@@ -89,11 +102,11 @@ def main() -> int:
         defs.CChipDef(name="U104", bus="0x00", dev="0x75"),
         defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
     ]
-    defs.configure_modes(sys.argv)
-    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    ssh_client.connect()
-    GPIOExpanderTester(chips, ssh_client).run()
-    ssh_client.close()
+    Appl = defs.CApplication(sys.argv)
+    rem_client = Appl.create_remote_client()
+    rem_client.connect()
+    GPIOExpanderTester(chips, rem_client).run()
+    rem_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

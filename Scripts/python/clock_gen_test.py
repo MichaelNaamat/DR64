@@ -9,18 +9,25 @@ import script_defs as defs
 
 @dataclass(frozen=False)
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Clock-Gen Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class ClockGenTester:
     REG_DEVICE_PN_BASE = "0x0D"
     REG_DEVICE_REV = "0x0E"
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Constructor Method to initialize the ClockGenTester 
+    # class with a list of chip definitions and a remote 
+    # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient): 
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CBaseClient): 
         self.chips = chips
         self.ssh_client = ssh_client
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Print Header Method to display a header for the chip 
+    # being tested
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
@@ -29,6 +36,10 @@ class ClockGenTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
         
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Check Device Method to read the device part number 
+    # and revision from the chip
+    # and print the results
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
@@ -36,6 +47,9 @@ class ClockGenTester:
         dev_rev = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV)
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Run Method to iterate through the list of chips and 
+    # check each device
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
@@ -49,11 +63,11 @@ def main() -> int:
         defs.CChipDef(name="U87", bus="0x01", dev="0x6A"),
         defs.CChipDef(name="U88", bus="0x01", dev="0x6B"),
     ]
-    defs.configure_modes(sys.argv)
-    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    ssh_client.connect()
-    ClockGenTester(chips, ssh_client).run()
-    ssh_client.close()
+    Appl = defs.CApplication(sys.argv)
+    rem_client = Appl.create_remote_client()
+    rem_client.connect()
+    ClockGenTester(chips, rem_client).run()
+    rem_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

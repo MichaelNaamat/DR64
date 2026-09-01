@@ -8,7 +8,7 @@ from typing import List
 import script_defs as defs
 
 @dataclass(frozen=False)
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Power Supply Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class PowerSupplyTester:
@@ -18,11 +18,18 @@ class PowerSupplyTester:
     REG_CONTROL3 = "0x03"
     REG_STATUS = "0x04"
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Constructor Method to initialize the PowerSupplyTester 
+    # class with a list of chip definitions and a remote
+    # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CSSHClient):
+    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CBaseClient):
         self.chips = chips
         self.ssh_client = ssh_client
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Print Header Method to display a header for the chip 
+    # being tested
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
         print(f"{defs.C_YELLOW_B}")
@@ -31,6 +38,9 @@ class PowerSupplyTester:
         print("*******************************************************")
         print(f"{defs.C_NONE}", end="")
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Check Device Method to verify the functionality of the 
+    # power supply
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
@@ -46,6 +56,8 @@ class PowerSupplyTester:
             f"Control2={control2}, Control3={control3}, Status={status}{defs.C_NONE}"
         )
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Run Method to execute the power supply tests for all chips
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
@@ -65,11 +77,11 @@ def main() -> int:
         defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
         defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
     ]
-    defs.configure_modes(sys.argv)
-    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    ssh_client.connect()
-    PowerSupplyTester(chips, ssh_client).run()
-    ssh_client.close()
+    Appl = defs.CApplication(sys.argv)
+    rem_client = Appl.create_remote_client()
+    rem_client.connect()
+    PowerSupplyTester(chips, rem_client).run()
+    rem_client.close()
     return 0
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

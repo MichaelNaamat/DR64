@@ -14,7 +14,7 @@ class VoltageChannel:
     max_val: float
 
 @dataclass(frozen=False)
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Voltage Monitor Chip Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class VoltageMonitorChip:
@@ -26,7 +26,7 @@ class VoltageMonitorChip:
 def channel(name: str, min_val: float, typ_val: float, max_val: float) -> VoltageChannel:
     return VoltageChannel(name=name, min_val=min_val, typ_val=typ_val, max_val=max_val)
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Voltage Monitor Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class VoltageMonitorTester:
@@ -45,12 +45,16 @@ class VoltageMonitorTester:
     REG_UV_LF    = ["0x22", "0x32", "0x42", "0x52", "0x62", "0x72", "0x82", "0x92"]
     REG_OV_LF    = ["0x23", "0x33", "0x43", "0x53", "0x63", "0x73", "0x83", "0x93"]
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Constructor Method to initialize the VoltageMonitorTester
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[VoltageMonitorChip], ssh_client: defs.CSSHClient, debug_mode: bool):
+    def __init__(self, chips: List[VoltageMonitorChip], ssh_client: defs.CBaseClient, debug_mode: bool):
         self.chips = chips
         self.ssh_client = ssh_client
         self.debug_mode = True # debug_mode
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Print Header Method to display a header for the chip
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     @staticmethod
     def print_interrupt_result(label: str, before_state: str, during_state: str, after_state: str) -> None:
@@ -70,11 +74,17 @@ class VoltageMonitorTester:
             f"{defs.C_GREEN_B}Pass,{defs.C_NONE}" if after_state == "hi" else f"{defs.C_RED_B}FAIL,{defs.C_NONE}",
             end="\n",)
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Format Voltage Method to format the raw voltage value 
+    # with a coefficient and multiplier
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     @staticmethod
     def format_voltage(raw_value: int, coef: float, mul: float) -> str:
         return f"{coef + raw_value * mul:.3f}"
     
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Check Channel Method to test the functionality of a 
+    # voltage monitor channel
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_channel(self, bus: str, dev: str, ch: int, ch_info: VoltageChannel, coef: float, mul: float) -> None:
         min_val = ch_info.min_val
@@ -135,6 +145,9 @@ class VoltageMonitorTester:
 
         self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)    # Print results of OV interrupt test
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Check Device Method to test the functionality of a
+    # voltage monitor device by checking each channel
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: VoltageMonitorChip) -> None:
         bus = chip.bus
@@ -169,6 +182,8 @@ class VoltageMonitorTester:
 
             ch_ind += 1
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Run Method to execute the voltage monitor tests for all chips
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def run(self) -> None:
         for chip in self.chips:
@@ -228,12 +243,11 @@ def main(argv: List[str]) -> int:
         VoltageMonitorChip(name="U95", bus="0x00", dev="0x35", channels=u95_channels),
         VoltageMonitorChip(name="U114", bus="0x00", dev="0x34", channels=u114_channels),
     ]
-    defs.configure_modes(argv)
-    
-    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
-    ssh_client.connect()
-    VoltageMonitorTester(chips, ssh_client, defs.debug_mode).run()
-    ssh_client.close()  
+    Appl = defs.CApplication(sys.argv)
+    rem_client = Appl.create_remote_client()
+    rem_client.connect()
+    VoltageMonitorTester(chips, rem_client, Appl.debug_mode).run()
+    rem_client.close()
     return 0
 
 

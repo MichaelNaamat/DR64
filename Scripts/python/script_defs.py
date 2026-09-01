@@ -271,3 +271,18 @@ class CApplication:
             elif arg.startswith("-pw="):
                 self.password = arg.split("=")[1]   
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # llocate client-link object according to command-line 
+    # argument and connect to the remote host
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def create_remote_client(self) -> CBaseClient:
+        match self.link:
+            case "ssh":
+                client = CSSHClient(hostname=self.hostname, username=self.username, password=self.password, simulate=self.sim_mode)
+            case "serial":
+                client = CSerialClient(com=self.com, baud=self.baud, simulate=self.sim_mode)
+            case _:
+                print(f"{C_RED_B}  >>> ERROR: Unsupported link type '{self.link}' specified!{C_NONE}")
+                raise ValueError(f"Unsupported link type '{self.link}' specified!")
+        client.connect()
+        return client
