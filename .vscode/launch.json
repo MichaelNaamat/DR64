@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["sim"]
+            "justMyCode": false,
+            "args": ["-sim", "-link=ssh", "-host=10.0.0.102", "-user=root"]
         }
     ]
 }
