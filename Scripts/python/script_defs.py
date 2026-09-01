@@ -6,6 +6,7 @@ import json
 import urllib.request
 import serial
 
+# =-=-=-=-=-=-=-=-=<< Constants >>-=-=-=-=-=-=-=-=-=-=-=-
 C_RED = "\033[0;31m"
 C_GREEN = "\033[0;32m"
 C_YELLOW = "\033[0;33m"
@@ -20,9 +21,12 @@ SSH_HOST = "10.0.0.102"     # Replace with your remote Linux IP or hostname
 SSH_USER = "root"           # Replace with your remote Linux username
 SSH_PASSWORD = ""           # Replace with your remote Linux password
 
+SERIAL_COM = "COM3"         # Replace with your serial COM port
+SERIAL_BAUD = 115200        # Replace with your serial baud rate
+
 global debug_mode, sim_mode
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Chip Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CChipDef:
@@ -34,14 +38,66 @@ class CChipDef:
         self.bus = bus
         self.dev = dev
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # General Client Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CBaseClient:
     def __init__(self, simulate: bool = False):
         self.simulate = simulate
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Pure virtual method for base class, to be implemented by derived classes
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def exec_cmd(self, cmd: str) -> str:
+        return "unknown"
+    
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # I2C Get Method to read byte/word register from the device via I2C bus
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def i2c_get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
+        cmd = "i2cget -y -f " + bus + " " + dev + " " + reg
+        if mode is not None:
+            cmd += " " + mode
+        if self.simulate:
+            return "0x00"
+
+        return self.exec_cmd(cmd)
+
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # I2C Get Method to read byte/word register from the device via I2C bus, as integer
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def i2c_get_int(self, bus: str, dev: str, reg: str, mode: str | None = None) -> int:
+        return int(self.i2c_get(bus, dev, reg, mode), 16)
+
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # I2C Set Method to write byte/word register to the device via I2C bus
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def i2c_set(self, bus: str, dev: str, reg: str, value: str, mode: str | None = None) -> None:
+        cmd = "i2cset -y -f " + bus + " " + dev + " " + reg + " " + value
+        if mode is not None:
+            cmd += " " + mode
+        if self.simulate:
+            return
+        self.exec_cmd(cmd)
+
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Method that return the state of GPIO pin (high/low) 
+    # by reading the /sys/kernel/debug/gpio file on the 
+    # remote Linux host
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def gpio_read(self, pin_name: str) -> str:
+        if self.simulate:
+            return "unknown"
+
+        cmd = f"cat /sys/kernel/debug/gpio | grep {pin_name}"
+        output = self.exec_cmd(cmd)
+
+        match = re.search(r"\b(?:hi|lo)\b", output)
+        if match:
+            return match.group(0)
+        return "unknown"
+ 
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # SerialClient Definition
 # Parameters:
 #   Com: COM port for the serial connection
@@ -54,13 +110,23 @@ class CSerialClient(CBaseClient):
         self.baud = baud
         self.serial_port = None
 
-    # --->>> Connect to the serial port
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # TBD TBD TBD
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def exec_cmd(self, cmd: str) -> str:
+        return "unknown"
+
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Connect to the serial port
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def connect(self):
         if self.simulate:
             return
         self.serial_port = serial.Serial(port=self.com, baudrate=self.baud, timeout=1)
 
-    # --->>> Close the serial port connection
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Close the serial port connection
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def close(self):
         if self.simulate:
             return
@@ -69,7 +135,7 @@ class CSerialClient(CBaseClient):
             print("Serial connection closed.")
             self.serial_port = None
             
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # SSH Client Definition
 # Parameters:
 #   hostname: SSH hostname or IP address of the remote Linux host
@@ -87,7 +153,9 @@ class CSSHClient(CBaseClient):
         self.port = port
         self.ssh_client = None
 
-    # --->>> Connect to the remote Linux host via SSH
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Connect to the remote Linux host via SSH
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def connect(self):
         if self.simulate:
             return 
@@ -101,7 +169,9 @@ class CSSHClient(CBaseClient):
             password=self.password,
         )
 
-    # --->>> Close the SSH connection to the remote Linux host
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Close the SSH connection to the remote Linux host
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def close(self):
         if self.simulate:
             return 
@@ -109,65 +179,18 @@ class CSSHClient(CBaseClient):
             self.ssh_client.close()
             print("Connection closed.")
             self.ssh_client = None
-
-    # --->>> I2C Get Method to read byte/word register from the device via I2C bus
-    def i2c_get(self, bus: str, dev: str, reg: str, mode: str | None = None) -> str:
-        cmd = "i2cget -y -f " + bus + " " + dev + " " + reg
-        if mode is not None:
-            cmd += " " + mode
-
-        if self.simulate:
-            return "0x00"
-
+      
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def exec_cmd(self, cmd: str) -> str:
         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        _ = stdin
-
         output = stdout.read().decode("utf-8", errors="replace")
         errors = stderr.read().decode("utf-8", errors="replace")
         if errors:
             print(f"Errors occurred: {errors}")
         return output.strip()
     
-    # --->>> I2C Get Method to read byte/word register from the device via I2C bus, as integer
-    def i2c_get_int(self, bus: str, dev: str, reg: str, mode: str | None = None) -> int:
-        return int(self.i2c_get(bus, dev, reg, mode), 16)
-
-    # --->>> I2C Set Method to write byte/word register to the device via I2C bus
-    def i2c_set(self, bus: str, dev: str, reg: str, value: str, mode: str | None = None) -> None:
-        if self.simulate:
-            return
-
-        cmd = "i2cset -y -f " + bus + " " + dev + " " + reg + " " + value
-        if mode is not None:
-            cmd += " " + mode
-
-        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        _ = stdin
-
-        output = stdout.read().decode("utf-8", errors="replace")
-        errors = stderr.read().decode("utf-8", errors="replace")
-        if errors:
-            print(f"Errors occurred: {errors}")
-
-    # --->>> Method that return the state of GPIO pin (high/low) by reading the /sys/kernel/debug/gpio file on the remote Linux host
-    def gpio_read(self, pin_name: str) -> str:
-        if self.simulate:
-            return "unknown"
-
-        cmd = f"cat /sys/kernel/debug/gpio | grep {pin_name}"
-        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        _ = stdin
-
-        output = stdout.read().decode("utf-8", errors="replace")
-        errors = stderr.read().decode("utf-8", errors="replace")
-        if errors:
-            print(f"Errors occurred: {errors}")
-
-        match = re.search(r"\b(?:hi|lo)\b", output)
-        if match:
-            return match.group(0)
-        return "unknown"
-    
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def gpio_read_AVIVA (self, pin_name : str) -> str:
         if self.simulate:
@@ -204,24 +227,47 @@ class CSSHClient(CBaseClient):
         else:
             return "unknown"
         
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Application object
 # Parameters:
 #  argv: Command-line arguments
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CApplication:
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Constructor
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, argv: list[str]):
         self.argv = argv
+        self.link = "ssh"  # Default link type is SSH, can be overridden by command-line argument        
         self.debug_mode = False
         self.sim_mode = False
+        
+        # --->>> Default values for SSH connection
         self.hostname = SSH_HOST
         self.username = SSH_USER
         self.password = SSH_PASSWORD
+        
+        # --->>> Default values for Serial connection
+        self.com = SERIAL_COM
+        self.baud = SERIAL_BAUD
+        
+        self.read_args()  # Read command-line arguments to override defaults
 
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Read command-line arguments to override default values
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def read_args(self):
         for arg in self.argv[1:]:
-            if arg == "debug":
+            if arg == "-debug":
                 self.debug_mode = True
-            elif arg == "sim":
+            if arg == "-sim":
                 self.sim_mode = True
+            elif arg.startswith("-link="):
+                self.link = arg.split("=")[1]
+            elif arg.startswith("-host="):
+                self.hostname = arg.split("=")[1]
+            elif arg.startswith("-user="):
+                self.username = arg.split("=")[1]
+            elif arg.startswith("-pw="):
+                self.password = arg.split("=")[1]   
 

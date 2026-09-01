@@ -14,9 +14,9 @@ class PMICTester:
     REG_DEVICEID = "0x2B"
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: list[defs.CChipDef], ssh_client: defs.CSSHClient):
+    def __init__(self, chips: list[defs.CChipDef], rem_client: defs.CBaseClient):
         self.chips = chips
-        self.ssh_client = ssh_client
+        self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _print_header(self, chip: defs.CChipDef) -> None:
@@ -29,7 +29,7 @@ class PMICTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_id = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
+        dev_id = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICEID, "w")
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device ID={dev_id}{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -49,10 +49,19 @@ def main() -> int:
     Appl = defs.CApplication(sys.argv)
     Appl.read_args()
 
-    ssh_client = defs.CSSHClient(hostname=Appl.hostname, username=Appl.username, password=Appl.password, simulate=Appl.sim_mode)
-    ssh_client.connect()
-    PMICTester(chips, ssh_client).run()
-    ssh_client.close()
+    # --->>> Allocate Remote Client according to link type (ssh, telnet, etc.) and connect to the remote host
+    match Appl.link:
+        case "ssh":
+            rem_client = defs.CSSHClient(hostname=Appl.hostname, username=Appl.username, password=Appl.password, simulate=Appl.sim_mode)
+        case "serial":
+            rem_client = defs.CSerialClient(com=Appl.com, baud=Appl.baud, simulate=Appl.sim_mode)
+        case _:
+            print(f"{defs.C_RED_B}  >>> ERROR: Unsupported link type '{Appl.link}' specified!{defs.C_NONE}")
+            return 1
+        
+    rem_client.connect()
+    PMICTester(chips, rem_client).run()
+    rem_client.close()
     return 0
 
 
