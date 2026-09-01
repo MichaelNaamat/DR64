@@ -45,9 +45,11 @@ def main() -> int:
         defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
         defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
     ]
-    defs.configure_modes(sys.argv)
+    
+    Appl = defs.CApplication(sys.argv)
+    Appl.read_args()
 
-    ssh_client = defs.CSSHClient(hostname=defs.SSH_HOST, username=defs.SSH_USER, password=defs.SSH_PASSWORD, simulate=defs.sim_mode)
+    ssh_client = defs.CSSHClient(hostname=Appl.hostname, username=Appl.username, password=Appl.password, simulate=Appl.sim_mode)
     ssh_client.connect()
     PMICTester(chips, ssh_client).run()
     ssh_client.close()

@@ -4,6 +4,7 @@ import paramiko
 import re
 import json
 import urllib.request
+import serial
 
 C_RED = "\033[0;31m"
 C_GREEN = "\033[0;32m"
@@ -34,20 +35,56 @@ class CChipDef:
         self.dev = dev
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# General Client Definition
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+class CBaseClient:
+    def __init__(self, simulate: bool = False):
+        self.simulate = simulate
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# SerialClient Definition
+# Parameters:
+#   Com: COM port for the serial connection
+#   Baud: Baud rate for the serial connection
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+class CSerialClient(CBaseClient):
+    def __init__(self, com: str, baud: int = 115200, simulate: bool = False):
+        super().__init__(simulate=simulate)
+        self.com = com
+        self.baud = baud
+        self.serial_port = None
+
+    # --->>> Connect to the serial port
+    def connect(self):
+        if self.simulate:
+            return
+        self.serial_port = serial.Serial(port=self.com, baudrate=self.baud, timeout=1)
+
+    # --->>> Close the serial port connection
+    def close(self):
+        if self.simulate:
+            return
+        if self.serial_port is not None:
+            self.serial_port.close()
+            print("Serial connection closed.")
+            self.serial_port = None
+            
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # SSH Client Definition
 # Parameters:
+#   hostname: SSH hostname or IP address of the remote Linux host
+#   username: SSH username for the remote Linux host
+#   password: SSH password for the remote Linux host
+#   port: SSH port for the remote Linux host    
 #   simulate: Flag to indicate simulation (not accessing H/W, for debugging purposes)
-#   dev: I2C device address as a string (e.g., "0x37")
-#   reg: Register address as a string (e.g., "0x01")
-#   mode: Optional mode for I2C access (e.g., "b" for byte, "w" for word)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-class CSSHClient:
+class CSSHClient(CBaseClient):
     def __init__(self, hostname, username, password, port=22, simulate: bool = False):
+        super().__init__(simulate=simulate)
         self.hostname = hostname
         self.username = username
         self.password = password
         self.port = port
-        self.simulate = simulate
         self.ssh_client = None
 
     # --->>> Connect to the remote Linux host via SSH
@@ -167,17 +204,24 @@ class CSSHClient:
         else:
             return "unknown"
         
-    
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Get program modes according to command-line arguments
+# Application object
+# Parameters:
+#  argv: Command-line arguments
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-def configure_modes(argv: list[str]) :
-    global debug_mode, sim_mode
-    debug_mode = False
-    sim_mode = False
-    for arg in argv[1:]:
-        if arg == "debug":
-            debug_mode = True
-        elif arg == "sim":
-            sim_mode = True
+class CApplication:
+    def __init__(self, argv: list[str]):
+        self.argv = argv
+        self.debug_mode = False
+        self.sim_mode = False
+        self.hostname = SSH_HOST
+        self.username = SSH_USER
+        self.password = SSH_PASSWORD
+
+    def read_args(self):
+        for arg in self.argv[1:]:
+            if arg == "debug":
+                self.debug_mode = True
+            elif arg == "sim":
+                self.sim_mode = True
 
