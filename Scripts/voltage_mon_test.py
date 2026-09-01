@@ -115,25 +115,25 @@ class VoltageMonitorTester:
             else:
                 print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
 
-        int_stat1 = self.ssh_client.gpio_read("PK_08")
+        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state before test
+    
+        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")         # Set UV_HF to value of OV to trigger UV interrupt
+        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state during test
+    
+        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")         # Restore original UV_HF value
+        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO)
 
-        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")
-        int_stat2 = self.ssh_client.gpio_read("PK_08")
+        self.print_interrupt_result(f"Ch {ch}: UV", int_stat1, int_stat2, int_stat3)    # Print results of UV interrupt test
 
-        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")
-        int_stat3 = self.ssh_client.gpio_read("PK_08")
+        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state before test
+    
+        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")         # Set OV_HF to value of UV to trigger OV interrupt
+        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state during test
+    
+        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")         # Restore original OV_HF value
+        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state after test    
 
-        self.print_interrupt_result(f"Ch {ch}: UV", int_stat1, int_stat2, int_stat3)
-
-        int_stat1 = self.ssh_client.gpio_read("PK_08")
-
-        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")
-        int_stat2 = self.ssh_client.gpio_read("PK_08")
-
-        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")
-        int_stat3 = self.ssh_client.gpio_read("PK_08")
-
-        self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)
+        self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)    # Print results of OV interrupt test
 
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: VoltageMonitorChip) -> None:

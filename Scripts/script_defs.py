@@ -130,15 +130,16 @@ class CSSHClient:
         if match:
             return match.group(0)
         return "unknown"
+    
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def gpio_read_AVIVA (self, pin_name : str) -> str:
         if self.simulate:
             return "unknown"
 
         GPIO_URL = "http://10.0.0.102:8000/controller/gpio/read_values/"
-        payload = json.dumps({"log_level": "INFO", "gpios": [pin]}).encode("utf-8")
+        payload = json.dumps({"log_level": "INFO", "gpios": [pin_name]}).encode("utf-8")
         request = urllib.request.Request(
-            self.GPIO_URL,
+            GPIO_URL,
             data=payload,
             headers={"accept": "application/json", "Content-Type": "application/json"},
             method="POST",
@@ -158,7 +159,13 @@ class CSSHClient:
         except json.JSONDecodeError:
             pass
 
-        return body.strip()
+        # Convert string "0"/"1" to "lo"/"hi"
+        if body.strip() == "0":
+            return "lo" 
+        elif body.strip() == "1":
+            return "hi"
+        else:
+            return "unknown"
         
     
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -70,8 +70,8 @@ class TempSensorInterruptTester:
         self.ssh_client.i2c_set(chip.bus, chip.dev, self.REG_THIGH, org_t_high, "w")
 
         # --->>> Read current temperature
-        cur_temp = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_TEMP, "w")
-        cur_temp = int(cur_temp, 0) & 0xFF
+        cur_temp = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_TEMP, "w")
+        cur_temp = (cur_temp & 0xFF ) + (((cur_temp >> 8) & 0xFF) * 0.0625)
 
         int_after = self.ssh_client.gpio_read("PC_04")      # Read GPIO after restoring T-High/T-Low values
 
