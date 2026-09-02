@@ -56,6 +56,10 @@ class CBaseClient:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def exec_cmd(self, cmd: str) -> str:
         return "unknown"
+    def connect(self):
+        pass
+    def close(self):
+        pass    
     
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # I2C Get Method to read byte/word register from the device via I2C bus
