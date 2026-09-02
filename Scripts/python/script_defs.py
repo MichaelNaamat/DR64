@@ -1,4 +1,5 @@
 ## import subprocess
+import time
 from tokenize import Name
 import paramiko
 import re
@@ -23,8 +24,7 @@ SSH_PASSWORD = ""           # Replace with your remote Linux password
 
 SERIAL_COM = "COM3"         # Replace with your serial COM port
 SERIAL_BAUD = 115200        # Replace with your serial baud rate
-
-global debug_mode, sim_mode
+SERIAL_PROMPT = ">"         # Replace with your serial prompt
 
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Chip Definition
@@ -102,19 +102,15 @@ class CBaseClient:
 # Parameters:
 #   Com: COM port for the serial connection
 #   Baud: Baud rate for the serial connection
+#   Prompt: Serial prompt for command responses
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CSerialClient(CBaseClient):
-    def __init__(self, com: str, baud: int = 115200, simulate: bool = False):
+    def __init__(self, com: str, baud: int = SERIAL_BAUD, prompt: str = SERIAL_PROMPT, simulate: bool = False):
         super().__init__(simulate=simulate)
         self.com = com
         self.baud = baud
+        self.prompt = prompt
         self.serial_port = None
-
-    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
-    # TBD TBD TBD
-    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def exec_cmd(self, cmd: str) -> str:
-        return "unknown"
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Connect to the serial port
@@ -134,6 +130,37 @@ class CSerialClient(CBaseClient):
             self.serial_port.close()
             print("Serial connection closed.")
             self.serial_port = None
+
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Send Command Method to send a command over the serial 
+    # connection and read the response
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def exec_cmd(self, cmd: str) -> str:
+        if self.simulate:
+            return "unknown"
+
+        if self.serial_port is None:
+            raise RuntimeError("Serial port is not connected")
+    
+        self.serial_port.write((cmd + "\n").encode("utf-8"))
+        self.serial_port.flush()
+        time.sleep(0.1)
+    
+        output = ""
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            if self.serial_port.in_waiting:
+                chunk = self.serial_port.read(self.serial_port.in_waiting)
+                output += chunk.decode("utf-8", errors="replace")
+                if self.prompt in output:
+                    break
+            time.sleep(0.05)
+    
+        lines = output.splitlines()
+        for line in reversed(lines):
+            if line.strip() and line.strip() != self.prompt:
+                return line.strip()
+        return output.strip()
             
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # SSH Client Definition
@@ -181,6 +208,7 @@ class CSSHClient(CBaseClient):
             self.ssh_client = None
       
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Execute a command on the remote Linux host via SSH   
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def exec_cmd(self, cmd: str) -> str:
         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
@@ -248,9 +276,10 @@ class CApplication:
         self.password = SSH_PASSWORD
         
         # --->>> Default values for Serial connection
-        self.com = SERIAL_COM
-        self.baud = SERIAL_BAUD
-        
+        self.com    = SERIAL_COM
+        self.baud   = SERIAL_BAUD
+        self.prompt = SERIAL_PROMPT
+
         self.read_args()  # Read command-line arguments to override defaults
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -269,8 +298,10 @@ class CApplication:
             elif arg.startswith("-user="):
                 self.username = arg.split("=")[1]
             elif arg.startswith("-pw="):
-                self.password = arg.split("=")[1]   
-
+                 self.password = arg.split("=")[1]   
+            elif arg.startswith("-prompt="):
+                 self.prompt = arg.split("=")[1]
+                 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # llocate client-link object according to command-line 
     # argument and connect to the remote host
@@ -280,7 +311,7 @@ class CApplication:
             case "ssh":
                 client = CSSHClient(hostname=self.hostname, username=self.username, password=self.password, simulate=self.sim_mode)
             case "serial":
-                client = CSerialClient(com=self.com, baud=self.baud, simulate=self.sim_mode)
+                client = CSerialClient(com=self.com, baud=self.baud, prompt=self.prompt, simulate=self.sim_mode)
             case _:
                 print(f"{C_RED_B}  >>> ERROR: Unsupported link type '{self.link}' specified!{C_NONE}")
                 raise ValueError(f"Unsupported link type '{self.link}' specified!")
