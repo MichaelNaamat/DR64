@@ -36,6 +36,8 @@ class EEPromTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
+        byte1 = self.rem_client.i2c_get(chip.bus, chip.dev, "0x00")
+        print(f"{defs.C_BLUE_B}  >>> DEBUG: Byte1={byte1} from offset 0x00{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Run Method to execute the EEPROM tests for all chips
