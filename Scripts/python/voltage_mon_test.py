@@ -253,7 +253,7 @@ def main(argv: List[str]) -> int:
         VoltageMonitorChip(name="U94" , bus="0x00", dev="0x36", channels=u94_channels),
         VoltageMonitorChip(name="U95" , bus="0x00", dev="0x35", channels=u95_channels),
         VoltageMonitorChip(name="U114", bus="0x00", dev="0x34", channels=u114_channels),
-        VoltageMonitorChip(name="U148", bus="0x04", dev="0x33", channels=u148_channels),
+## TBD ??        VoltageMonitorChip(name="U148", bus="0x04", dev="0x33", channels=u148_channels),
     ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()

@@ -48,6 +48,12 @@ class CBaseClient:
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Pure virtual method for base class, to be implemented by derived classes
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def gpio_read_AVIVA (self, pin_name : str) -> str:
+        return "unknown"
+    
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # Pure virtual method for base class, to be implemented by derived classes
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def exec_cmd(self, cmd: str) -> str:
         return "unknown"
     
@@ -165,6 +171,30 @@ class CSerialClient(CBaseClient):
             if line.strip() and line.strip() != self.prompt:
                 return line.strip()
         return output.strip()
+    
+    # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    def gpio_read_AVIVA (self, pin_name : str) -> str:
+        if self.simulate:
+            return "unknown"
+        cmd = f"wget -qO- --method=POST \
+                   --header='accept: application/json' \
+                   --header='Content-Type: application/json' \
+                   --body-data='{{\"log_level\": \"INFO\", \"gpios\": [\"{pin_name}\"]}}' \
+                   \"http://10.0.0.102:8000/controller/gpio/read_values/\""
+        response = self.exec_cmd(cmd)
+
+        value = response[129:130]
+        if value is not None:
+            # Convert string "0"/"1" to "lo"/"hi"
+            if value.strip() == "0":
+                return "lo" 
+            elif value.strip() == "1":
+                return "hi"
+            else:
+                return "unknown"
+        else:
+            return "unknown"
             
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # SSH Client Definition
@@ -247,17 +277,16 @@ class CSSHClient(CBaseClient):
                 if data:
                     value = data[0].get("Val")
                     if value is not None:
-                        return str(value)
+                        # Convert string "0"/"1" to "lo"/"hi"
+                        if value.strip() == "0":
+                            return "lo" 
+                        elif value.strip() == "1":
+                            return "hi"
+                        else:
+                            return "unknown"
         except json.JSONDecodeError:
             pass
-
-        # Convert string "0"/"1" to "lo"/"hi"
-        if body.strip() == "0":
-            return "lo" 
-        elif body.strip() == "1":
-            return "hi"
-        else:
-            return "unknown"
+        return "unknown"
         
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Application object

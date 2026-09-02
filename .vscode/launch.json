@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["-sim", "-link=ssh", "-host=10.0.0.102", "-user=root", "-com=COM12"]
+            "args": ["-sim", "-link=ssh", "-host=10.0.0.102", "-user=root", "-com=COM12", "-prompt=root@s32g399ardb3:~#"]
         }
     ]
 }
