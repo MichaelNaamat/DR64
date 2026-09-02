@@ -21,9 +21,9 @@ class ClockGenTester:
     # class with a list of chip definitions and a remote 
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CBaseClient): 
+    def __init__(self, chips: List[defs.CChipDef], rem_client: defs.CBaseClient): 
         self.chips = chips
-        self.ssh_client = ssh_client
+        self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Print Header Method to display a header for the chip 
@@ -43,8 +43,8 @@ class ClockGenTester:
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_device(self, chip: defs.CChipDef) -> None:
         self._print_header(chip)
-        dev_pn = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE)
-        dev_rev = self.ssh_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV)
+        dev_pn = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_PN_BASE)
+        dev_rev = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_DEVICE_REV)
         print(f"{defs.C_BLUE_B}  >>> DEBUG: Device PN={dev_pn}, Device REV={dev_rev}{defs.C_NONE}")
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-

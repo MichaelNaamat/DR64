@@ -118,7 +118,11 @@ class CSerialClient(CBaseClient):
     def connect(self):
         if self.simulate:
             return
-        self.serial_port = serial.Serial(port=self.com, baudrate=self.baud, timeout=1)
+        if self.serial_port is None:        # Protect from opening the serial port multiple times
+            self.serial_port = serial.Serial(port=self.com, baudrate=self.baud, timeout=1)
+            if not self.serial_port.is_open:
+                self.serial_port.open()
+
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Close the serial port connection
@@ -293,12 +297,18 @@ class CApplication:
                 self.sim_mode = True
             elif arg.startswith("-link="):
                 self.link = arg.split("=")[1]
+            # --->>> SSH connection parameters    
             elif arg.startswith("-host="):
                 self.hostname = arg.split("=")[1]
             elif arg.startswith("-user="):
-                self.username = arg.split("=")[1]
+                self.username = arg.split("=")[1]                
             elif arg.startswith("-pw="):
-                 self.password = arg.split("=")[1]   
+                 self.password = arg.split("=")[1] 
+            # --->>> Serial connection parameters
+            elif arg.startswith("-baud="):
+                 self.baud = int(arg.split("=")[1])
+            elif arg.startswith("-com="):
+                 self.com = arg.split("=")[1]  
             elif arg.startswith("-prompt="):
                  self.prompt = arg.split("=")[1]
                  
@@ -315,5 +325,4 @@ class CApplication:
             case _:
                 print(f"{C_RED_B}  >>> ERROR: Unsupported link type '{self.link}' specified!{C_NONE}")
                 raise ValueError(f"Unsupported link type '{self.link}' specified!")
-        client.connect()
         return client

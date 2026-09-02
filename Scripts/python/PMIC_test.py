@@ -56,6 +56,7 @@ def main() -> int:
     chips = [
         defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
         defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
+        defs.CChipDef(name="U50", bus="0x04", dev="0x28"),
     ]
     
     Appl = defs.CApplication(sys.argv)

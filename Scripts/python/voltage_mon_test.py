@@ -237,11 +237,23 @@ def main(argv: List[str]) -> int:
         channel("5V (Main 5V) +/-5%", 4.75, 5.0, 5.25),
     ]
 
+    u148_channels: List[Optional[VoltageChannel]] = [   # TBD....
+        channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("0.8V () +/-5%", 0.76, 0.8, 0.84),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("0.84V () +/-5%", 0.798, 0.84, 0.882),
+        channel("1.2V () +/-5%", 1.14, 1.2, 1.26),
+        channel("1.8V (ETH_1v8) +/-5%", 1.71, 1.8, 1.89),
+        channel("5V (Main 5V) +/-5%", 4.75, 5.0, 5.25),
+    ]
+
     chips = [
-        VoltageMonitorChip(name="U93", bus="0x00", dev="0x37", channels=u93_channels),
-        VoltageMonitorChip(name="U94", bus="0x00", dev="0x36", channels=u94_channels),
-        VoltageMonitorChip(name="U95", bus="0x00", dev="0x35", channels=u95_channels),
+        VoltageMonitorChip(name="U93" , bus="0x00", dev="0x37", channels=u93_channels),
+        VoltageMonitorChip(name="U94" , bus="0x00", dev="0x36", channels=u94_channels),
+        VoltageMonitorChip(name="U95" , bus="0x00", dev="0x35", channels=u95_channels),
         VoltageMonitorChip(name="U114", bus="0x00", dev="0x34", channels=u114_channels),
+        VoltageMonitorChip(name="U148", bus="0x04", dev="0x33", channels=u148_channels),
     ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
