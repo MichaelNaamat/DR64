@@ -2,9 +2,14 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "DR64 Python Scripts",
+			"path": "Scripts/python"
 		}
 	],
 	"settings": {
-		"python.analysis.typeCheckingMode": "basic"
+		"python.analysis.typeCheckingMode": "basic",
+		"stm32cube-ide-clangd.path": "cube"
 	}
 }
