@@ -13,13 +13,17 @@ import script_defs as defs
 class PMICTester:
     REG_DEVICEID = "0x2B"
 
+    chips = [
+        defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
+        defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
+        defs.CChipDef(name="U50", bus="0x04", dev="0x28"),
+    ]
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the PMICTester 
     # class with a list of chip definitions and a remote 
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: list[defs.CChipDef], rem_client: defs.CBaseClient):
-        self.chips = chips
+    def __init__(self, rem_client: defs.CBaseClient):
         self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -52,18 +56,12 @@ class PMICTester:
 # =-=-=-=-=-=-=-=-=<< Function >>-=-=-=-=-=-=-=-=-=-=-
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-def main() -> int:
-    chips = [
-        defs.CChipDef(name="U54", bus="0x04", dev="0x20"),
-        defs.CChipDef(name="U54", bus="0x04", dev="0x21"),
-        defs.CChipDef(name="U50", bus="0x04", dev="0x28"),
-    ]
-    
+def main() -> int:  
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
       
     rem_client.connect()
-    PMICTester(chips, rem_client).run()
+    PMICTester(rem_client).run()
     rem_client.close()
     return 0
 

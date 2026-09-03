@@ -18,13 +18,22 @@ class PowerSupplyTester:
     REG_CONTROL3 = "0x03"
     REG_STATUS = "0x04"
 
+    chips = [
+        defs.CChipDef(name="U33"   , bus="0x01", dev="0x33"),
+        defs.CChipDef(name="A_U26" , bus="0x01", dev="0x40"),
+        defs.CChipDef(name="A_U18" , bus="0x01", dev="0x43"),
+        defs.CChipDef(name="A_U100", bus="0x01", dev="0x46"),
+        defs.CChipDef(name="U32"   , bus="0x02", dev="0x30"),
+        defs.CChipDef(name="B_U26" , bus="0x02", dev="0x40"),
+        defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
+        defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
+    ]
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the PowerSupplyTester 
     # class with a list of chip definitions and a remote
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], rem_client: defs.CBaseClient):
-        self.chips = chips
+    def __init__(self, rem_client: defs.CBaseClient):
         self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -67,20 +76,10 @@ class PowerSupplyTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
 def main() -> int:
-    chips = [
-        defs.CChipDef(name="U33"   , bus="0x01", dev="0x33"),
-        defs.CChipDef(name="A_U26" , bus="0x01", dev="0x40"),
-        defs.CChipDef(name="A_U18" , bus="0x01", dev="0x43"),
-        defs.CChipDef(name="A_U100", bus="0x01", dev="0x46"),
-        defs.CChipDef(name="U32"   , bus="0x02", dev="0x30"),
-        defs.CChipDef(name="B_U26" , bus="0x02", dev="0x40"),
-        defs.CChipDef(name="U34"   , bus="0x02", dev="0x43"),
-        defs.CChipDef(name="B_U100", bus="0x02", dev="0x46"),
-    ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()
-    PowerSupplyTester(chips, rem_client).run()
+    PowerSupplyTester(rem_client).run()
     rem_client.close()
     return 0
 

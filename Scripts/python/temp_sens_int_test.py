@@ -21,13 +21,20 @@ class TempSensorInterruptTester:
     REG_THIGH = "0x03"
     REG_OS = "0x04"
 
+    chips = [
+        defs.CChipDef(name="U60" , bus="0x04", dev="0x48"),
+        defs.CChipDef(name="U61" , bus="0x04", dev="0x4C"),
+        defs.CChipDef(name="U62" , bus="0x04", dev="0x49"),
+        defs.CChipDef(name="U64" , bus="0x04", dev="0x4A"),
+        defs.CChipDef(name="U127", bus="0x00", dev="0x49"),
+    ]
+
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the TempSensorInterruptTester 
     # class with a list of chip definitions and a remote 
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], rem_client: defs.CBaseClient):
-        self.chips = chips
+    def __init__(self, rem_client: defs.CBaseClient):
         self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -122,18 +129,10 @@ class TempSensorInterruptTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main():
-    chips = [
-        defs.CChipDef(name="U60" , bus="0x04", dev="0x48"),
-        defs.CChipDef(name="U61" , bus="0x04", dev="0x4C"),
-        defs.CChipDef(name="U62" , bus="0x04", dev="0x49"),
-        defs.CChipDef(name="U64" , bus="0x04", dev="0x4A"),
-        defs.CChipDef(name="U127", bus="0x00", dev="0x49"),
-    ]
-
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()
-    TempSensorInterruptTester(chips, rem_client).run()
+    TempSensorInterruptTester(rem_client).run()
     rem_client.close()
     return 0
 

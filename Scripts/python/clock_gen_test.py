@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-import subprocess
 import sys
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 import script_defs as defs
 
@@ -16,13 +15,17 @@ class ClockGenTester:
     REG_DEVICE_PN_BASE = "0x0D"
     REG_DEVICE_REV = "0x0E"
 
+    chips = [
+        defs.CChipDef(name="U87", bus="0x01", dev="0x6A"),
+        defs.CChipDef(name="U88", bus="0x01", dev="0x6B"),
+    ]
+
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the ClockGenTester 
     # class with a list of chip definitions and a remote 
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], rem_client: defs.CBaseClient): 
-        self.chips = chips
+    def __init__(self, rem_client: defs.CBaseClient): 
         self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -59,14 +62,10 @@ class ClockGenTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main() -> int:
-    chips = [
-        defs.CChipDef(name="U87", bus="0x01", dev="0x6A"),
-        defs.CChipDef(name="U88", bus="0x01", dev="0x6B"),
-    ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()
-    ClockGenTester(chips, rem_client).run()
+    ClockGenTester(rem_client).run()
     rem_client.close()
     return 0
 

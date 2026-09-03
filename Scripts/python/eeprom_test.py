@@ -8,15 +8,15 @@ import script_defs as defs
 # EEPROM Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class EEPromTester:
-    # --->>> Register Definitions for EEPROM
-
+    chips = [
+        defs.CChipDef(name="U59"   , bus="0x00", dev="0x50"),
+    ]
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the EEPromTester 
     # class with a list of chip definitions and a remote
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], rem_client: defs.CBaseClient):
-        self.chips = chips
+    def __init__(self,rem_client: defs.CBaseClient):
         self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -50,13 +50,10 @@ class EEPromTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
 def main() -> int:
-    chips = [
-        defs.CChipDef(name="U59"   , bus="0x00", dev="0x50"),
-    ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()
-    EEPromTester(chips, rem_client).run()
+    EEPromTester(rem_client).run()
     rem_client.close()
     return 0
 

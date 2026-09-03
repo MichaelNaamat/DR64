@@ -12,6 +12,7 @@ from dataclasses import dataclass
 # GPIO Expander Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class GPIOExpanderTester:
+    # --->>> Register Addresses for GPIO Expander
     REG_DIN0 = "0x00"
     REG_DIN1 = "0x01"
     REG_DOUT0 = "0x02"
@@ -21,13 +22,17 @@ class GPIOExpanderTester:
     REG_CONF0 = "0x06"
     REG_CONF1 = "0x07"
 
+    chips = [
+        defs.CChipDef(name="U103", bus="0x04", dev="0x74"),
+        defs.CChipDef(name="U104", bus="0x00", dev="0x75"),
+        defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
+    ]
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the GPIOExpanderTester 
     # class with a list of chip definitions and a remote
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, chips: List[defs.CChipDef], ssh_client: defs.CBaseClient):
-        self.chips = chips
+    def __init__(self, ssh_client: defs.CBaseClient):
         self.ssh_client = ssh_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -97,15 +102,10 @@ class GPIOExpanderTester:
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def main() -> int:
-    chips = [
-        defs.CChipDef(name="U103", bus="0x04", dev="0x74"),
-        defs.CChipDef(name="U104", bus="0x00", dev="0x75"),
-        defs.CChipDef(name="U146", bus="0x00", dev="0x74"),
-    ]
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()
-    GPIOExpanderTester(chips, rem_client).run()
+    GPIOExpanderTester(rem_client).run()
     rem_client.close()
     return 0
 
