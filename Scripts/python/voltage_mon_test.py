@@ -12,6 +12,8 @@ class VoltageChannel:
     min_val: float
     typ_val: float
     max_val: float
+    pos_percent: float
+    neg_percent: float
 
 @dataclass(frozen=False)
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -23,8 +25,8 @@ class VoltageMonitorChip:
     dev: str
     channels: List[Optional[VoltageChannel]]
 
-def channel(name: str, min_val: float, typ_val: float, max_val: float) -> VoltageChannel:
-    return VoltageChannel(name=name, min_val=min_val, typ_val=typ_val, max_val=max_val)
+def channel(name: str, min_val: float, typ_val: float, max_val: float, pos_percent: float = 5.0, neg_percent: float = 5.0) -> VoltageChannel:
+    return VoltageChannel(name=name, min_val=min_val, typ_val=typ_val, max_val=max_val, pos_percent=pos_percent, neg_percent=neg_percent)
 
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # Voltage Monitor Tester Class Definition
@@ -45,24 +47,25 @@ class VoltageMonitorTester:
     REG_UV_LF    = ["0x22", "0x32", "0x42", "0x52", "0x62", "0x72", "0x82", "0x92"]
     REG_OV_LF    = ["0x23", "0x33", "0x43", "0x53", "0x63", "0x73", "0x83", "0x93"]
 
+    # --->>> List of voltage monitor chips to be tested
     u93_channels: List[Optional[VoltageChannel]] = [
-        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
+        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875, 2.5, 3.0),
         channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
-        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
+        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854, 3.0, 3.0),
         channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
         channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
-        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
+        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815, 3.0, 3.0),
         channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
         channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
     ]
 
     u94_channels: List[Optional[VoltageChannel]] = [
-        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875),
+        channel("0.875V (core) +2.5% / -3%", 0.84875, 0.875, 0.896875, 2.5, 3.0),
         channel("1.8V (PCIE) +/-5%", 1.71, 1.8, 1.89),
-        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854),
+        channel("1.8V (IP) +/-3%", 1.746, 1.8, 1.854, 3.0, 3.0),
         channel("0.86V (PCIE) +/-5%", 0.817, 0.86, 0.903),
         channel("0.75V (MIPI) +/-5%", 0.7125, 0.75, 0.7875),
-        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815),
+        channel("1.05V (DDR) +/-3%", 1.0185, 1.05, 1.0815, 3.0, 3.0),
         channel("0.5V (DDR) +/-5%", 0.475, 0.5, 0.525),
         channel("1.8V (Main) +/-5%", 1.71, 1.8, 1.89),
     ]
@@ -141,9 +144,9 @@ class VoltageMonitorTester:
     # with a coefficient and multiplier
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     @staticmethod
-    def format_voltage(raw_value: int, coef: float, mul: float) -> str:
-        return f"{coef + raw_value * mul:.3f}"
-    
+    def format_voltage(raw_value: int, coef: float, mul: float) -> float:
+        return coef + raw_value * mul
+
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Check Channel Method to test the functionality of a 
     # voltage monitor channel
@@ -152,6 +155,8 @@ class VoltageMonitorTester:
         min_val = ch_info.min_val
         typ_val = ch_info.typ_val
         max_val = ch_info.max_val
+        pos_tolerance = (max_val - min_val) * (ch_info.pos_percent / 100)
+        neg_tolerance = (max_val - min_val) * (ch_info.neg_percent / 100)
 
         self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x00")        # Switch to bank 0 for VMON_LVL register
         mon_lvl = self.ssh_client.i2c_get_int(bus, dev, self.REG_VMON_LVL[ch])
@@ -180,9 +185,9 @@ class VoltageMonitorTester:
                 f"                             UV_HF={uv_hf_v}({uv_hf}) OV_HF={ov_hf_v}({ov_hf}) UV_LF={uv_lf_v}({uv_lf}) OV_LF={ov_lf_v}({ov_lf}){defs.C_NONE}"
             )
 
-            if float(mon_lvl_v) < min_val:
+            if mon_lvl_v < (min_val - neg_tolerance):
                 print(f"{defs.C_RED}  >>> Ch {ch}: ERROR: Less than min ({mon_lvl_v} < {min_val}){defs.C_NONE}")
-            elif float(mon_lvl_v) > max_val:
+            elif mon_lvl_v > (max_val + pos_tolerance):
                 print(f"{defs.C_RED}  >>> Ch {ch}: ERROR: More than max ({mon_lvl_v} > {max_val}){defs.C_NONE}")
             else:
                 print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
@@ -218,7 +223,7 @@ class VoltageMonitorTester:
         self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")
         vrange_mult = self.ssh_client.i2c_get_int(bus, dev, self.REG_VRANGE_MULT)
 
-        print(defs.C_YELLOW)
+        print(defs.C_YELLOW_B)
         print("****************************************************")
         print(f"* Testing {chip.name}: Addr {dev} on i2c bus {bus} *")
         if self.debug_mode:

@@ -11,6 +11,7 @@ import script_defs as defs
 # Temperature Sensor Interrupt Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class TempSensorInterruptTester:
+    # --->>> Register Definitions for Temperature Sensor
     REG_TEMP = "0x00"
     REG_CR = "0x01"
     REG_TLOW = "0x02"

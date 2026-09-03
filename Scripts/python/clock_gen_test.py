@@ -11,6 +11,7 @@ import script_defs as defs
 # Clock-Gen Tester Class Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class ClockGenTester:
+    # ---->>> Register Definitions for Clock-Gen
     REG_DEVICE_PN_BASE = "0x0D"
     REG_DEVICE_REV = "0x0E"
 
