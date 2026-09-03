@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-
-import re
-import subprocess
 from dataclasses import dataclass
 import sys
 import time
-from typing import List, Optional
 
 import script_defs as defs
 

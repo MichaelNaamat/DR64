@@ -2,7 +2,6 @@
 
 import sys
 from dataclasses import dataclass
-from typing import List
 
 import script_defs as defs
 

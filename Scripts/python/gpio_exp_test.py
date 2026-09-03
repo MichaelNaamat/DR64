@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-
-import subprocess
 import sys
-from typing import List
 
 import script_defs as defs
 from dataclasses import dataclass
