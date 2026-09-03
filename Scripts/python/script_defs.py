@@ -37,6 +37,21 @@ class CChipDef:
         self.bus = bus
         self.dev = dev
 
+# =-=-=-=-=-=-=-=<< Function >>-=-=-=-=-=-=-=-=-=-=-=-
+# Disable color output
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+def disable_color():
+    global C_RED, C_GREEN, C_YELLOW, C_BLUE, C_RED_B, C_GREEN_B, C_YELLOW_B, C_BLUE_B, C_NONE
+    C_RED = ""
+    C_GREEN = ""
+    C_YELLOW = ""
+    C_BLUE = ""
+    C_RED_B = ""
+    C_GREEN_B = ""
+    C_YELLOW_B = ""
+    C_BLUE_B = ""
+    C_NONE = ""
+    
 # =-=-=-=-=-=-=-=-=<< Object >>-=-=-=-=-=-=-=-=-=-=-=-
 # General Client Definition
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -301,20 +316,21 @@ class CApplication:
     # Constructor
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def __init__(self, argv: list[str]):
-        self.argv = argv
-        self.link = "ssh"  # Default link type is SSH, can be overridden by command-line argument        
-        self.debug_mode = False
-        self.sim_mode = False
+        self.argv: list[str] = argv
+        self.link: str = "ssh"  # Default link type is SSH, can be overridden by command-line argument        
+        self.debug_mode: bool = False
+        self.sim_mode: bool = False
+        self.nocolor: bool = False
         
         # --->>> Default values for SSH connection
-        self.hostname = SSH_HOST
-        self.username = SSH_USER
-        self.password = SSH_PASSWORD
+        self.hostname: str = SSH_HOST
+        self.username: str = SSH_USER
+        self.password: str = SSH_PASSWORD
         
         # --->>> Default values for Serial connection
-        self.com    = SERIAL_COM
-        self.baud   = SERIAL_BAUD
-        self.prompt = SERIAL_PROMPT
+        self.com: str = SERIAL_COM
+        self.baud: int = SERIAL_BAUD
+        self.prompt: str = SERIAL_PROMPT
 
         self.read_args()  # Read command-line arguments to override defaults
 
@@ -329,6 +345,8 @@ class CApplication:
                 self.sim_mode = True
             elif arg.startswith("-link="):
                 self.link = arg.split("=")[1]
+            elif arg == "-nocolor":
+                self.nocolor = True
             # --->>> SSH connection parameters    
             elif arg.startswith("-host="):
                 self.hostname = arg.split("=")[1]
