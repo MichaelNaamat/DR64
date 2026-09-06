@@ -114,8 +114,8 @@ class VoltageMonitorTester:
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Constructor Method to initialize the VoltageMonitorTester
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, ssh_client: defs.CBaseClient, debug_mode: bool):
-        self.ssh_client = ssh_client
+    def __init__(self, rem_client: defs.CBaseClient, debug_mode: bool):
+        self.rem_client = rem_client
         self.debug_mode = True # debug_mode
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
@@ -158,14 +158,14 @@ class VoltageMonitorTester:
         pos_tolerance = (max_val - min_val) * (ch_info.pos_percent / 100.)
         neg_tolerance = (max_val - min_val) * (ch_info.neg_percent / 100.)
 
-        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x00")        # Switch to bank 0 for VMON_LVL register
-        mon_lvl = self.ssh_client.i2c_get_int(bus, dev, self.REG_VMON_LVL[ch])
+        self.rem_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x00")        # Switch to bank 0 for VMON_LVL register
+        mon_lvl = self.rem_client.i2c_get_int(bus, dev, self.REG_VMON_LVL[ch])
 
-        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")        # Switch to bank 1 for UV/OV registers
-        uv_hf = self.ssh_client.i2c_get_int(bus, dev, self.REG_UV_HF[ch])
-        ov_hf = self.ssh_client.i2c_get_int(bus, dev, self.REG_OV_HF[ch])
-        uv_lf = self.ssh_client.i2c_get_int(bus, dev, self.REG_UV_LF[ch])
-        ov_lf = self.ssh_client.i2c_get_int(bus, dev, self.REG_OV_LF[ch])
+        self.rem_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")        # Switch to bank 1 for UV/OV registers
+        uv_hf = self.rem_client.i2c_get_int(bus, dev, self.REG_UV_HF[ch])
+        ov_hf = self.rem_client.i2c_get_int(bus, dev, self.REG_OV_HF[ch])
+        uv_lf = self.rem_client.i2c_get_int(bus, dev, self.REG_UV_LF[ch])
+        ov_lf = self.rem_client.i2c_get_int(bus, dev, self.REG_OV_LF[ch])
 
         if mon_lvl <= 0 or mon_lvl > 255:
             print(f"{defs.C_RED_B}  >>> ERROR: Invalid monitor level ({mon_lvl}) for channel {ch}{defs.C_NONE}")
@@ -188,23 +188,23 @@ class VoltageMonitorTester:
             else:
                 print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
 
-        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
+        int_stat1 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
     
-        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")         # Set UV_HF to value of OV to trigger UV interrupt
-        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
+        self.rem_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")         # Set UV_HF to value of OV to trigger UV interrupt
+        int_stat2 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
     
-        self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")         # Restore original UV_HF value
-        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO)
+        self.rem_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")         # Restore original UV_HF value
+        int_stat3 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO)
 
         self.print_interrupt_result(f"Ch {ch}: UV", int_stat1, int_stat2, int_stat3)    # Print results of UV interrupt test
 
-        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
+        int_stat1 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
     
-        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")         # Set OV_HF to value of UV to trigger OV interrupt
-        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
+        self.rem_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")         # Set OV_HF to value of UV to trigger OV interrupt
+        int_stat2 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
     
-        self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")         # Restore original OV_HF value
-        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state after test    
+        self.rem_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")         # Restore original OV_HF value
+        int_stat3 = self.rem_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state after test    
 
         self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)    # Print results of OV interrupt test
 
@@ -216,18 +216,18 @@ class VoltageMonitorTester:
         bus = chip.bus
         dev = chip.dev
 
-        self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")
-        vrange_mult = self.ssh_client.i2c_get_int(bus, dev, self.REG_VRANGE_MULT)
+        self.rem_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x01")
+        vrange_mult = self.rem_client.i2c_get_int(bus, dev, self.REG_VRANGE_MULT)
 
         print(defs.C_YELLOW_B)
         print("****************************************************")
         print(f"* Testing {chip.name}: Addr {dev} on i2c bus {bus} *")
         if self.debug_mode:
-            ien_uvhf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_UVHF)
-            ien_uvlf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_UVLF)
-            ien_ovhf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_OVHF)
-            ien_ovlf = self.ssh_client.i2c_get(bus, dev, self.REG_IEN_OVLF)
-            mon_ch_en = self.ssh_client.i2c_get(bus, dev, self.REG_MON_CH_EN)
+            ien_uvhf = self.rem_client.i2c_get(bus, dev, self.REG_IEN_UVHF)
+            ien_uvlf = self.rem_client.i2c_get(bus, dev, self.REG_IEN_UVLF)
+            ien_ovhf = self.rem_client.i2c_get(bus, dev, self.REG_IEN_OVHF)
+            ien_ovlf = self.rem_client.i2c_get(bus, dev, self.REG_IEN_OVLF)
+            mon_ch_en = self.rem_client.i2c_get(bus, dev, self.REG_MON_CH_EN)
             print(
                 f"* Int enable: UVHF={ien_uvhf}, UVLF={ien_uvlf}, OVHF={ien_ovhf}, OVLF={ien_ovlf}, MON_CH_EN={mon_ch_en} *"
             )
@@ -255,7 +255,7 @@ class VoltageMonitorTester:
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Main Entry Point
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-def main(argv: List[str]) -> int:
+def main() -> int:
     Appl = defs.CApplication(sys.argv)
     rem_client = Appl.create_remote_client()
     rem_client.connect()

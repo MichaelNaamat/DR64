@@ -57,7 +57,7 @@ def disable_color():
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CBaseClient:
     def __init__(self, simulate: bool = False):
-        self.simulate = simulate
+        self.simulate: bool = simulate
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Pure virtual method for base class, to be implemented by derived classes
@@ -131,10 +131,10 @@ class CBaseClient:
 class CSerialClient(CBaseClient):
     def __init__(self, com: str, baud: int = SERIAL_BAUD, prompt: str = SERIAL_PROMPT, simulate: bool = False):
         super().__init__(simulate=simulate)
-        self.com = com
-        self.baud = baud
-        self.prompt = prompt
-        self.serial_port = None
+        self.com: str = com
+        self.baud: int = baud
+        self.prompt: str = prompt
+        self.serial_port: serial.Serial | None = None
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Connect to the serial port
@@ -224,13 +224,13 @@ class CSerialClient(CBaseClient):
 #   simulate: Flag to indicate simulation (not accessing H/W, for debugging purposes)
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 class CSSHClient(CBaseClient):
-    def __init__(self, hostname, username, password, port=22, simulate: bool = False):
+    def __init__(self, hostname: str, username: str, password: str, port: int = 22, simulate: bool = False):
         super().__init__(simulate=simulate)
-        self.hostname = hostname
-        self.username = username
-        self.password = password
-        self.port = port
-        self.ssh_client = None
+        self.hostname: str = hostname
+        self.username: str = username
+        self.password: str = password
+        self.port: int = port
+        self.ssh_client: paramiko.SSHClient | None = None
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Connect to the remote Linux host via SSH

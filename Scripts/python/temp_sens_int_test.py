@@ -53,8 +53,8 @@ class TempSensorInterruptTester:
     # the test
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def check_interrupt(self, chip: defs.CChipDef) -> None:
-        org_t_low = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_TLOW, "w")
-        org_t_high = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_THIGH, "w")
+        org_t_low: str = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_TLOW, "w")
+        org_t_high: str = self.rem_client.i2c_get(chip.bus, chip.dev, self.REG_THIGH, "w")
 
         self._print_header(chip, org_t_low, org_t_high)
         time.sleep(0.1)

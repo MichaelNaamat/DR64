@@ -17,6 +17,9 @@ def main() -> int:
     rem_client = Appl.create_remote_client()    # Create a remote client for communication with the target device
     rem_client.connect()                        # Establish connection with the target device
     
+    if Appl.nocolor:
+        defs.disable_color()                    # Disable color output if -nocolor argument is provided
+        
     # --->>> Run tests for various components on the target device
     clock_gen_test.ClockGenTester(rem_client).run()
     eeprom_test.EEPromTester(rem_client).run()

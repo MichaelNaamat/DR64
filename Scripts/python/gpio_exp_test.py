@@ -29,8 +29,8 @@ class GPIOExpanderTester:
     # class with a list of chip definitions and a remote
     # client for communication
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    def __init__(self, ssh_client: defs.CBaseClient):
-        self.ssh_client = ssh_client
+    def __init__(self, rem_client: defs.CBaseClient):
+        self.rem_client = rem_client
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
     # Print Header Method to display a header for the chip 
@@ -48,14 +48,14 @@ class GPIOExpanderTester:
     # and configuration registers from the chip
     # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     def _read_ports(self, chip: defs.CChipDef) -> tuple[int, int, int, int, int, int, int, int]:
-        din0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0)
-        din1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN1)
-        dout0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT0)
-        dout1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT1)
-        pol0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL0)
-        pol1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL1)
-        conf0 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF0)
-        conf1 = self.ssh_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1)
+        din0: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN0)
+        din1: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_DIN1)
+        dout0: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT0)
+        dout1: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_DOUT1)
+        pol0: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL0)
+        pol1: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_POL1)
+        conf0: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF0)
+        conf1: int = self.rem_client.i2c_get_int(chip.bus, chip.dev, self.REG_CONF1)
         return din0, din1, dout0, dout1, pol0, pol1, conf0, conf1
 
     # =-=-=-=-=-=-=-=-=<< Method >>-=-=-=-=-=-=-=-=-=-=-=-
