@@ -155,8 +155,8 @@ class VoltageMonitorTester:
         min_val = ch_info.min_val
         typ_val = ch_info.typ_val
         max_val = ch_info.max_val
-        pos_tolerance = (max_val - min_val) * (ch_info.pos_percent / 100)
-        neg_tolerance = (max_val - min_val) * (ch_info.neg_percent / 100)
+        pos_tolerance = (max_val - min_val) * (ch_info.pos_percent / 100.)
+        neg_tolerance = (max_val - min_val) * (ch_info.neg_percent / 100.)
 
         self.ssh_client.i2c_set(bus, dev, self.REG_BANK_SEL, "0x00")        # Switch to bank 0 for VMON_LVL register
         mon_lvl = self.ssh_client.i2c_get_int(bus, dev, self.REG_VMON_LVL[ch])
@@ -178,12 +178,8 @@ class VoltageMonitorTester:
             uv_lf_v = self.format_voltage(uv_lf, coef, mul)
             ov_lf_v = self.format_voltage(ov_lf, coef, mul)
 
-            print(
-                f"{defs.C_BLUE_B}  >>> DEBUG: Ch {ch}: min={min_val}, typ={typ_val}, max={max_val}, MON_LVL={mon_lvl_v}({mon_lvl})"
-            )
-            print(
-                f"                             UV_HF={uv_hf_v}({uv_hf}) OV_HF={ov_hf_v}({ov_hf}) UV_LF={uv_lf_v}({uv_lf}) OV_LF={ov_lf_v}({ov_lf}){defs.C_NONE}"
-            )
+            print(f"{defs.C_BLUE_B}  >>> DEBUG: Ch {ch}: min={min_val}, typ={typ_val}, max={max_val}, MON_LVL={mon_lvl_v}({mon_lvl})")
+            print(f"                             UV_HF={uv_hf_v}({uv_hf}) OV_HF={ov_hf_v}({ov_hf}) UV_LF={uv_lf_v}({uv_lf}) OV_LF={ov_lf_v}({ov_lf}){defs.C_NONE}") 
 
             if mon_lvl_v < (min_val - neg_tolerance):
                 print(f"{defs.C_RED}  >>> Ch {ch}: ERROR: Less than min ({mon_lvl_v} < {min_val}){defs.C_NONE}")
@@ -192,23 +188,23 @@ class VoltageMonitorTester:
             else:
                 print(f"{defs.C_GREEN}  >>> Ch {ch}: OK: {mon_lvl_v} is within range [{min_val}, {max_val}]{defs.C_NONE}")
 
-        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state before test
+        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
     
         self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{ov_hf:02x}")         # Set UV_HF to value of OV to trigger UV interrupt
-        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state during test
+        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
     
         self.ssh_client.i2c_set(bus, dev, self.REG_UV_HF[ch], f"0x{uv_hf:02x}")         # Restore original UV_HF value
-        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO)
+        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO)
 
         self.print_interrupt_result(f"Ch {ch}: UV", int_stat1, int_stat2, int_stat3)    # Print results of UV interrupt test
 
-        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state before test
+        int_stat1 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state before test
     
         self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{uv_hf:02x}")         # Set OV_HF to value of UV to trigger OV interrupt
-        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state during test
+        int_stat2 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state during test
     
         self.ssh_client.i2c_set(bus, dev, self.REG_OV_HF[ch], f"0x{ov_hf:02x}")         # Restore original OV_HF value
-        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_07 GPIO) state after test    
+        int_stat3 = self.ssh_client.gpio_read_AVIVA("PK_08")                            # Read int (pk_08 GPIO) state after test    
 
         self.print_interrupt_result(f"Ch {ch}: OV", int_stat1, int_stat2, int_stat3)    # Print results of OV interrupt test
 
